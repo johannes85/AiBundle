@@ -1,0 +1,30 @@
+{
+    "name": "johannes85/ai-bundle",
+    "description": "Adds AI support to Symfony",
+    "type": "library",
+    "version": "1.0.0",
+    "license": "MIT",
+    "autoload": {
+        "psr-4": {
+            "Johannes85\\AiBundle\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "Johannes85",
+            "email": "johannes@johnimedia.de"
+        }
+    ],
+    "require-dev": {
+        "symfony/console": "^7.2",
+        "symfony/serializer": "^7.2",
+        "symfony/framework-bundle": "^7.2",
+        "symfony/yaml": "^7.2"
+    },
+    "require": {
+        "symfony/property-info": "^7.2",
+        "symfony/http-client": "^7.2",
+        "phpdocumentor/reflection-docblock": "^5.6",
+        "symfony/property-access": "^7.2"
+    }
+}
