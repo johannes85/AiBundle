@@ -1,0 +1,12 @@
+services:
+  _defaults:
+    autowire: true
+
+  Johannes85\AiBundle\LLM\Ollama\Examples\:
+    resource: '../src/LLM/Ollama/Examples'
+    public: true;
+
+  Johannes85\AiBundle\LLM\Ollama\Ollama:
+    arguments:
+      $endpoint: 'http://127.0.0.1:11434'
+      $model: 'gemma2'
