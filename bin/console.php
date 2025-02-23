@@ -1,3 +1,4 @@
+#!/usr/bin/php
 <?php
 
 use Psr\Log\LoggerInterface;
@@ -22,5 +23,6 @@ $container->compile();
 $app = new Application('Symfony AiBundle examples');
 $app->addCommands([
   $container->get(\Johannes85\AiBundle\LLM\Ollama\Examples\GenerateCommand::class),
+  $container->get(\Johannes85\AiBundle\LLM\OpenAi\Examples\GenerateCommand::class)
 ]);
 $app->run();
