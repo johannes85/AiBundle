@@ -1,9 +1,9 @@
 <?php
 
-namespace Johannes85\AiBundle\LLM\OpenAi\Dto;
+namespace AiBundle\LLM\OpenAi\Dto;
 
-use Johannes85\AiBundle\Prompting\Message;
-use Johannes85\AiBundle\Prompting\MessageRole;
+use AiBundle\Prompting\Message;
+use AiBundle\Prompting\MessageRole;
 
 abstract class AbstractOpenAiMessage {
 
@@ -22,9 +22,9 @@ abstract class AbstractOpenAiMessage {
    * Creates new OpenAi message from message
    *
    * @param Message $message
-   * @return static
+   * @return self
    */
-  public static function fromMessage(Message $message): static {
+  public static function fromMessage(Message $message): self {
     $class = match ($message->getRole()) {
       MessageRole::SYSTEM => OpenAiDeveloperMessage::class,
       MessageRole::HUMAN => OpenAiUserMessage::class,

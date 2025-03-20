@@ -1,0 +1,45 @@
+name: Symfony Bundle Testing
+
+on: [push, pull_request]
+
+jobs:
+
+  unit-tests:
+    strategy:
+      matrix:
+        php: [8.2, 8.3, 8.4]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+
+      - name: Install dependencies
+        run: composer install
+
+      - name: Run tests
+        run: vendor/bin/simple-phpunit
+
+  static-analysis:
+    strategy:
+      matrix:
+        php: [ 8.2, 8.3, 8.4 ]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+
+      - name: Install dependencies
+        run: composer install
+
+      - name: Run PHPStan
+        run: vendor/bin/phpstan analyse

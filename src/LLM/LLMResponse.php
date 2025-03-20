@@ -1,8 +1,8 @@
 <?php
 
-namespace Johannes85\AiBundle\LLM;
+namespace AiBundle\LLM;
 
-use Johannes85\AiBundle\Prompting\Message;
+use AiBundle\Prompting\Message;
 
 class LLMResponse {
 

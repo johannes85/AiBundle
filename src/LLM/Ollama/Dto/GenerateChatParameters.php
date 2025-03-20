@@ -1,12 +1,15 @@
 <?php
 
-namespace Johannes85\AiBundle\LLM\Ollama\Dto;
+namespace AiBundle\LLM\Ollama\Dto;
 
-use Johannes85\AiBundle\LLM\Ollama\Dto\AbstractGenerateParameters;
+use AiBundle\LLM\Ollama\Dto\AbstractGenerateParameters;
 
 class GenerateChatParameters extends AbstractGenerateParameters {
 
   private bool $stream = false;
+
+  /** @var array<mixed>|null */
+  private ?array $format = null;
 
   /**
    * @param string $model
@@ -48,6 +51,22 @@ class GenerateChatParameters extends AbstractGenerateParameters {
 
   public function setStream(bool $stream): GenerateChatParameters {
     $this->stream = $stream;
+    return $this;
+  }
+
+  /**
+   * @return array<mixed>|null
+   */
+  public function getFormat(): ?array {
+    return $this->format;
+  }
+
+  /**
+   * @param array<mixed>|null $format
+   * @return static
+   */
+  public function setFormat(?array $format): static {
+    $this->format = $format;
     return $this;
   }
 

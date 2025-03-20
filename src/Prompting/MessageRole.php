@@ -1,6 +1,6 @@
 <?php
 
-namespace Johannes85\AiBundle\Prompting;
+namespace AiBundle\Prompting;
 
 enum MessageRole {
 

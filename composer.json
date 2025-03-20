@@ -6,12 +6,17 @@
     "license": "MIT",
     "autoload": {
         "psr-4": {
-            "Johannes85\\AiBundle\\": "src/"
+            "AiBundle\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "AiBundle\\Tests\\": "tests/"
         }
     },
     "authors": [
         {
-            "name": "Johannes85",
+            "name": "Johannes Zinnau",
             "email": "johannes@johnimedia.de"
         }
     ],
@@ -19,9 +24,12 @@
         "symfony/console": "^7.2",
         "symfony/serializer": "^7.2",
         "symfony/framework-bundle": "^7.2",
-        "symfony/yaml": "^7.2"
+        "symfony/yaml": "^7.2",
+        "phpstan/phpstan": "^2.1",
+        "symfony/phpunit-bridge": "^7.2"
     },
     "require": {
+        "PHP": ">=8.2",
         "symfony/property-info": "^7.2",
         "symfony/http-client": "^7.2",
         "phpdocumentor/reflection-docblock": "^5.6",

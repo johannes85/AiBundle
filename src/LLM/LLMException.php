@@ -1,6 +1,6 @@
 <?php
 
-namespace Johannes85\AiBundle\LLM;
+namespace AiBundle\LLM;
 
 use RuntimeException;
 

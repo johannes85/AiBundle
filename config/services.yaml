@@ -2,14 +2,14 @@ services:
   _defaults:
     autowire: true
 
-  Johannes85\AiBundle\:
+  AiBundle\:
     resource: '../src/'
 
   ai_bundle.rest.serializer:
     class: Symfony\Component\Serializer\Serializer
-    factory: '@Johannes85\AiBundle\Rest\SerializerFactory'
+    factory: '@AiBundle\Rest\SerializerFactory'
 
   ai_bundle.rest.http_client:
     class: Symfony\Contracts\HttpClient\HttpClientInterface
-    factory: '@Johannes85\AiBundle\Rest\HttpClientFactory'
+    factory: '@AiBundle\Rest\HttpClientFactory'
 
