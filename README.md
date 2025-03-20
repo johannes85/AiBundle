@@ -8,6 +8,9 @@ The following backends are supported:
 - [OpenAI](https://openai.com/)
 - [Ollama](https://ollama.ai/)
 
+## Requirements
+- PHP >=8.2
+
 ## Features
 
 ### Backend independent generating:
