@@ -1,4 +1,7 @@
 # Symfony Ai Bundle
+
+![example workflow](https://github.com/johannes85/AiBundle/actions/workflows/symfony-bundle.yml/badge.svg)
+
 This Symfony bundle allows to call LLM backends in a generic and simple way.
 
 The following backends are supported:
