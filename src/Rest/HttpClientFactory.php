@@ -1,6 +1,6 @@
 <?php
 
-namespace Johannes85\AiBundle\Rest;
+namespace AiBundle\Rest;
 
 use Symfony\Component\HttpClient\HttpClient;
 use Symfony\Contracts\HttpClient\HttpClientInterface;

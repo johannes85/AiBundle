@@ -1,15 +1,17 @@
 <?php
 
-namespace Johannes85\AiBundle\LLM\Ollama;
+namespace AiBundle\LLM\Ollama;
 
-use Johannes85\AiBundle\LLM\AbstractLLM;
-use Johannes85\AiBundle\LLM\LLMException;
-use Johannes85\AiBundle\LLM\LLMResponse;
-use Johannes85\AiBundle\LLM\Ollama\Dto\GenerateChatParameters;
-use Johannes85\AiBundle\LLM\Ollama\Dto\OllamaMessage;
-use Johannes85\AiBundle\LLM\Ollama\Dto\OllamaChatResponse;
-use Johannes85\AiBundle\Prompting\Message;
-use Johannes85\AiBundle\Prompting\MessageRole;
+use AiBundle\Json\SchemaGenerator;
+use AiBundle\Json\SchemaGeneratorException;
+use AiBundle\LLM\AbstractLLM;
+use AiBundle\LLM\LLMDataResponse;
+use AiBundle\LLM\LLMException;
+use AiBundle\LLM\LLMResponse;
+use AiBundle\LLM\Ollama\Dto\GenerateChatParameters;
+use AiBundle\LLM\Ollama\Dto\OllamaMessage;
+use AiBundle\LLM\Ollama\Dto\OllamaChatResponse;
+use AiBundle\Prompting\Message;
 use SensitiveParameter;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\Serializer\Normalizer\AbstractObjectNormalizer;
@@ -24,14 +26,16 @@ class Ollama extends AbstractLLM {
     #[SensitiveParameter] private string $endpoint,
     private string $model,
     #[Autowire('@ai_bundle.rest.http_client')] private HttpClientInterface $httpClient,
-    #[Autowire('@ai_bundle.rest.serializer')] private Serializer $serializer
+    #[Autowire('@ai_bundle.rest.serializer')] private Serializer $serializer,
+    private SchemaGenerator $schemaGenerator
   ) {}
 
   /**
    * @inheritDoc
    *
-   * @param Message[] $messages
+   * @param array<Message> $messages
    * @return LLMResponse
+   * @throws LLMException
    */
   public function generate(array $messages): LLMResponse {
     /** @var OllamaChatResponse $res */
@@ -49,6 +53,49 @@ class Ollama extends AbstractLLM {
       $res->getMessage()->toMessage()
     );
   }
+
+  /**
+   * @inheritDoc
+   *
+   * @param array<Message> $messages
+   * @param string $datatype
+   * @return LLMDataResponse
+   * @throws LLMException
+   */
+  public function generateData(array $messages, string $datatype): LLMDataResponse {
+    try {
+      $format = $this->schemaGenerator->generateForClass($datatype);
+    } catch (SchemaGeneratorException $ex) {
+      throw new LLMException(
+        'Error generating schema for datatype: ' . $ex->getMessage(),
+        previous: $ex
+      );
+    }
+
+    /** @var OllamaChatResponse $res */
+    $res = $this->doRequest(
+      'POST',
+      '/api/chat',
+      OllamaChatResponse::class,
+      (new GenerateChatParameters(
+        $this->model,
+        array_map(fn (Message $message) => OllamaMessage::fromMessage($message), $messages)
+      ))
+        ->setStream(false)
+        ->setFormat($format)
+    );
+    $message = $res->getMessage();
+    try {
+      $object = $this->serializer->deserialize($message->getContent(), $datatype, 'json');
+    } catch (SerializerExceptionInterface $ex) {
+      $object = null;
+    }
+    return new LLMDataResponse(
+      $message->toMessage(),
+      $object
+    );
+  }
+
 
   /**
    * Performs REST request and deserializes response

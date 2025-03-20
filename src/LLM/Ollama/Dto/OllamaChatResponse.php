@@ -1,6 +1,6 @@
 <?php
 
-namespace Johannes85\AiBundle\LLM\Ollama\Dto;
+namespace AiBundle\LLM\Ollama\Dto;
 
 class OllamaChatResponse {
 

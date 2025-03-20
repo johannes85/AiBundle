@@ -1,6 +1,6 @@
 <?php
 
-namespace Johannes85\AiBundle\LLM\OpenAi\Dto;
+namespace AiBundle\LLM\OpenAi\Dto;
 
 class OpenAiDeveloperMessage extends AbstractOpenAiMessage {
 

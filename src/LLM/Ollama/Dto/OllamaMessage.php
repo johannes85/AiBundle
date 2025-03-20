@@ -1,9 +1,10 @@
 <?php
 
-namespace Johannes85\AiBundle\LLM\Ollama\Dto;
+namespace AiBundle\LLM\Ollama\Dto;
 
-use Johannes85\AiBundle\Prompting\Message;
-use Johannes85\AiBundle\Prompting\MessageRole;
+use AiBundle\Prompting\Message;
+use AiBundle\Prompting\MessageRole;
+use InvalidArgumentException;
 
 class OllamaMessage {
 
@@ -39,7 +40,8 @@ class OllamaMessage {
       match ($this->getRole()) {
         'assistant' => MessageRole::AI,
         'user' => MessageRole::HUMAN,
-        'system' => MessageRole::SYSTEM
+        'system' => MessageRole::SYSTEM,
+        default => throw new InvalidArgumentException('Invalid role of Ollama message' . $this->getRole())
       },
       $this->content
     ));

@@ -1,22 +1,23 @@
 <?php
 
-namespace Johannes85\AiBundle\LLM\OpenAi;
+namespace AiBundle\LLM\OpenAi;
 
-use Johannes85\AiBundle\LLM\AbstractLLM;
-use Johannes85\AiBundle\LLM\LLMResponse;
-use Johannes85\AiBundle\LLM\OpenAi\Dto\AbstractOpenAiMessage;
-use Johannes85\AiBundle\LLM\OpenAi\Dto\ChatCompletionRequest;
-use Johannes85\AiBundle\LLM\OpenAi\Dto\ChatCompletionResponse;
-use Johannes85\AiBundle\Prompting\Message;
-use Johannes85\AiBundle\Prompting\MessageRole;
+use AiBundle\Json\SchemaGenerator;
+use AiBundle\LLM\AbstractLLM;
+use AiBundle\LLM\LLMDataResponse;
+use AiBundle\LLM\LLMResponse;
+use AiBundle\LLM\OpenAi\Dto\AbstractOpenAiMessage;
+use AiBundle\LLM\OpenAi\Dto\ChatCompletionRequest;
+use AiBundle\LLM\OpenAi\Dto\ChatCompletionResponse;
+use AiBundle\Prompting\Message;
+use AiBundle\Prompting\MessageRole;
 use SensitiveParameter;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\Serializer\Exception\ExceptionInterface as SerializerExceptionInterface;
 use Symfony\Component\Serializer\Normalizer\AbstractObjectNormalizer;
 use Symfony\Component\Serializer\Serializer;
-use Symfony\Contracts\HttpClient\Exception\DecodingExceptionInterface;
 use Symfony\Contracts\HttpClient\Exception\ExceptionInterface as HttpClientExceptionInterface;
-use Johannes85\AiBundle\LLM\LLMException;
+use AiBundle\LLM\LLMException;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 class OpenAi extends AbstractLLM {
@@ -27,14 +28,16 @@ class OpenAi extends AbstractLLM {
     #[SensitiveParameter] private string $apiKey,
     private string $model,
     #[Autowire('@ai_bundle.rest.http_client')] private HttpClientInterface $httpClient,
-    #[Autowire('@ai_bundle.rest.serializer')] private Serializer $serializer
+    #[Autowire('@ai_bundle.rest.serializer')] private Serializer $serializer,
+    private SchemaGenerator $schemaGenerator
   ) {}
 
   /**
    * @inheritDoc
    *
-   * @param array $messages
+   * @param array<Message> $messages
    * @return LLMResponse
+   * @throws LLMException
    */
   public function generate(array $messages): LLMResponse {
     /** @var ChatCompletionResponse $res */
@@ -49,6 +52,39 @@ class OpenAi extends AbstractLLM {
     );
     return new LLMResponse(
       new Message(MessageRole::AI, $res->getChoices()[0]->getMessage()->getContent())
+    );
+  }
+
+  /**
+   * @inheritDoc
+   */
+  public function generateData(array $messages, string $datatype): LLMDataResponse {
+    /** @var ChatCompletionResponse $res */
+    $res = $this->doRequest(
+      'POST',
+      '/chat/completions',
+      ChatCompletionResponse::class,
+      (new ChatCompletionRequest(
+        $this->model,
+        array_map(fn (Message $message) => AbstractOpenAiMessage::fromMessage($message), $messages),
+      ))
+        ->setResponseFormat([
+          'type' => 'json_schema',
+          'json_schema' => [
+            'name' => 'response',
+            'schema' => $this->schemaGenerator->generateForClass($datatype)
+          ]
+        ])
+    );
+    $message = $res->getChoices()[0]->getMessage();
+    try {
+      $object = $this->serializer->deserialize($message->getContent(), $datatype, 'json');
+    } catch (SerializerExceptionInterface $ex) {
+      $object = null;
+    }
+    return new LLMDataResponse(
+      new Message(MessageRole::AI, $message->getContent()),
+      $object
     );
   }
 
