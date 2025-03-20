@@ -2,7 +2,7 @@
     "name": "johannes85/ai-bundle",
     "description": "Adds AI support to Symfony",
     "type": "library",
-    "version": "1.0.0",
+    "version": "0.0.2",
     "license": "MIT",
     "autoload": {
         "psr-4": {
