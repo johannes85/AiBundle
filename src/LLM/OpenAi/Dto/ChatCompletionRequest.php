@@ -6,6 +6,9 @@ use Symfony\Component\Serializer\Attribute\SerializedName;
 
 class ChatCompletionRequest {
 
+  /**
+   * @var array<mixed>|null
+   */
   #[SerializedName('response_format')]
   private ?array $responseFormat = null;
 
@@ -44,18 +47,18 @@ class ChatCompletionRequest {
   }
 
   /**
-   * @return array|null
+   * @return array<mixed>|null
    */
   public function getResponseFormat(): ?array {
-    return $this->response_format;
+    return $this->responseFormat;
   }
 
   /**
-   * @param array|null $response_format
+   * @param array<mixed>|null $response_format
    * @return static
    */
   public function setResponseFormat(?array $response_format): static {
-    $this->response_format = $response_format;
+    $this->responseFormat = $response_format;
     return $this;
   }
 
