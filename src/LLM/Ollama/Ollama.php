@@ -5,6 +5,7 @@ namespace AiBundle\LLM\Ollama;
 use AiBundle\Json\SchemaGenerator;
 use AiBundle\Json\SchemaGeneratorException;
 use AiBundle\LLM\AbstractLLM;
+use AiBundle\LLM\GenerateOptions;
 use AiBundle\LLM\LLMDataResponse;
 use AiBundle\LLM\LLMException;
 use AiBundle\LLM\LLMResponse;
@@ -12,6 +13,7 @@ use AiBundle\LLM\Ollama\Dto\GenerateChatParameters;
 use AiBundle\LLM\Ollama\Dto\OllamaMessage;
 use AiBundle\LLM\Ollama\Dto\OllamaChatResponse;
 use AiBundle\Prompting\Message;
+use AiBundle\LLM\Ollama\Dto\OllamaOptions;
 use SensitiveParameter;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\Serializer\Normalizer\AbstractObjectNormalizer;
@@ -37,7 +39,7 @@ class Ollama extends AbstractLLM {
    * @return LLMResponse
    * @throws LLMException
    */
-  public function generate(array $messages): LLMResponse {
+  public function generate(array $messages, ?GenerateOptions $options = null): LLMResponse {
     /** @var OllamaChatResponse $res */
     $res = $this->doRequest(
       'POST',
@@ -48,6 +50,7 @@ class Ollama extends AbstractLLM {
         array_map(fn (Message $message) => OllamaMessage::fromMessage($message), $messages)
       ))
         ->setStream(false)
+        ->setOptions($options !== null ? OllamaOptions::fromGenerateOptions($options) : null)
     );
     return new LLMResponse(
       $res->getMessage()->toMessage()
@@ -62,7 +65,7 @@ class Ollama extends AbstractLLM {
    * @return LLMDataResponse
    * @throws LLMException
    */
-  public function generateData(array $messages, string $datatype): LLMDataResponse {
+  public function generateData(array $messages, string $datatype, ?GenerateOptions $options = null): LLMDataResponse {
     try {
       $format = $this->schemaGenerator->generateForClass($datatype);
     } catch (SchemaGeneratorException $ex) {
@@ -83,6 +86,7 @@ class Ollama extends AbstractLLM {
       ))
         ->setStream(false)
         ->setFormat($format)
+        ->setOptions($options !== null ? OllamaOptions::fromGenerateOptions($options) : null)
     );
     $message = $res->getMessage();
     try {
@@ -95,7 +99,6 @@ class Ollama extends AbstractLLM {
       $object
     );
   }
-
 
   /**
    * Performs REST request and deserializes response

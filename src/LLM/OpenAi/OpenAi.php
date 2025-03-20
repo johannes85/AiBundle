@@ -3,7 +3,9 @@
 namespace AiBundle\LLM\OpenAi;
 
 use AiBundle\Json\SchemaGenerator;
+use AiBundle\Json\SchemaGeneratorException;
 use AiBundle\LLM\AbstractLLM;
+use AiBundle\LLM\GenerateOptions;
 use AiBundle\LLM\LLMDataResponse;
 use AiBundle\LLM\LLMResponse;
 use AiBundle\LLM\OpenAi\Dto\AbstractOpenAiMessage;
@@ -36,19 +38,21 @@ class OpenAi extends AbstractLLM {
    * @inheritDoc
    *
    * @param array<Message> $messages
+   * @param GenerateOptions|null $options
    * @return LLMResponse
    * @throws LLMException
    */
-  public function generate(array $messages): LLMResponse {
+  public function generate(array $messages, ?GenerateOptions $options = null): LLMResponse {
     /** @var ChatCompletionResponse $res */
     $res = $this->doRequest(
       'POST',
       '/chat/completions',
       ChatCompletionResponse::class,
-      (new ChatCompletionRequest(
+      ChatCompletionRequest::fromGenerateOptions(
         $this->model,
         array_map(fn (Message $message) => AbstractOpenAiMessage::fromMessage($message), $messages),
-      ))
+        $options
+      )
     );
     return new LLMResponse(
       new Message(MessageRole::AI, $res->getChoices()[0]->getMessage()->getContent())
@@ -57,8 +61,23 @@ class OpenAi extends AbstractLLM {
 
   /**
    * @inheritDoc
+   *
+   * @param array<Message> $messages
+   * @param string $datatype
+   * @param GenerateOptions|null $options
+   * @return LLMDataResponse
+   * @throws LLMException
    */
-  public function generateData(array $messages, string $datatype): LLMDataResponse {
+  public function generateData(array $messages, string $datatype, ?GenerateOptions $options = null): LLMDataResponse {
+    try {
+      $format = $this->schemaGenerator->generateForClass($datatype);
+    } catch (SchemaGeneratorException $ex) {
+      throw new LLMException(
+        'Error generating schema for datatype: ' . $ex->getMessage(),
+        previous: $ex
+      );
+    }
+
     /** @var ChatCompletionResponse $res */
     $res = $this->doRequest(
       'POST',
@@ -72,7 +91,7 @@ class OpenAi extends AbstractLLM {
           'type' => 'json_schema',
           'json_schema' => [
             'name' => 'response',
-            'schema' => $this->schemaGenerator->generateForClass($datatype)
+            'schema' => $format
           ]
         ])
     );

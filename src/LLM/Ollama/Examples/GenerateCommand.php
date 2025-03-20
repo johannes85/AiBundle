@@ -3,6 +3,7 @@
 namespace AiBundle\LLM\Ollama\Examples;
 
 use AiBundle\Json\Attributes\ArrayType;
+use AiBundle\LLM\GenerateOptions;
 use AiBundle\LLM\LLMException;
 use AiBundle\LLM\Ollama\Ollama;
 use AiBundle\Prompting\Message;
@@ -40,9 +41,13 @@ class GenerateCommand extends Command {
    */
   protected function execute(InputInterface $input, OutputInterface $output): int {
     $output->writeln(
-      $this->ollama->generate([
-        new Message(MessageRole::HUMAN, 'Say Hello World')
-      ])->getMessage()->getContent()
+      $this->ollama->generate(
+        [
+          new Message(MessageRole::HUMAN, 'Say Hello World')
+        ],
+        (new GenerateOptions())
+          ->setTemperature(0.8)
+      )->getMessage()->getContent()
     );
 
     $res = $this->ollama->generateData([

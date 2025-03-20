@@ -3,6 +3,7 @@
 namespace AiBundle\LLM\OpenAi\Examples;
 
 use AiBundle\Json\Attributes\ArrayType;
+use AiBundle\LLM\GenerateOptions;
 use AiBundle\LLM\LLMException;
 use AiBundle\Prompting\Message;
 use AiBundle\Prompting\MessageRole;
@@ -39,11 +40,13 @@ class GenerateCommand extends Command {
    * @throws LLMException
    */
   protected function execute(InputInterface $input, OutputInterface $output): int {
-    /*$output->writeln(
-      $this->openai->generate([
-        new Message(MessageRole::HUMAN, 'Say Hello World')
-      ])->getMessage()->getContent()
-    );*/
+    $output->writeln(
+      $this->openai->generate(
+        [
+          new Message(MessageRole::HUMAN, 'Say Hello World')
+        ]
+      )->getMessage()->getContent()
+    );
 
     $res =  $this->openai->generateData([
       new Message(MessageRole::HUMAN, 'Tell me about Canada')
