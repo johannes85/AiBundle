@@ -7,7 +7,6 @@ class Messages {
   /** @var array<Message> */
   private array $messages = [];
 
-
   public function __construct(Message ...$messages) {
     $this->messages = $messages;
   }

@@ -3,6 +3,7 @@
 namespace AiBundle\LLM\Ollama\Dto;
 
 use AiBundle\LLM\Ollama\Dto\AbstractGenerateParameters;
+use AiBundle\LLM\Ollama\Dto\OllamaOptions;
 
 class GenerateChatParameters extends AbstractGenerateParameters {
 
@@ -10,6 +11,8 @@ class GenerateChatParameters extends AbstractGenerateParameters {
 
   /** @var array<mixed>|null */
   private ?array $format = null;
+
+  private ?OllamaOptions $options = null;
 
   /**
    * @param string $model
@@ -67,6 +70,15 @@ class GenerateChatParameters extends AbstractGenerateParameters {
    */
   public function setFormat(?array $format): static {
     $this->format = $format;
+    return $this;
+  }
+
+  public function getOptions(): ?OllamaOptions {
+    return $this->options;
+  }
+
+  public function setOptions(?OllamaOptions $options): static {
+    $this->options = $options;
     return $this;
   }
 
