@@ -25,12 +25,12 @@ abstract class AbstractOpenAiMessage {
    * @return self
    */
   public static function fromMessage(Message $message): self {
-    $class = match ($message->getRole()) {
+    $class = match ($message->role) {
       MessageRole::SYSTEM => OpenAiDeveloperMessage::class,
       MessageRole::HUMAN => OpenAiUserMessage::class,
       MessageRole::AI => OpenAiAssistantMessage::class
     };
-    return new $class($message->getContent());
+    return new $class($message->content);
   }
 
 }

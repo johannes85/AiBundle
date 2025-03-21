@@ -19,7 +19,7 @@ class MessageTest extends TestCase {
     ]);
     $this->assertEquals(
       'content value1 value2 {{keyInValue}} ',
-      $res->getContent()
+      $res->content
     );
     $this->assertNotSame($message, $res);
   }
@@ -37,7 +37,7 @@ class MessageTest extends TestCase {
     ]);
     $this->assertEquals(
       'content 1 123 123.45 Test',
-      $res->getContent()
+      $res->content
     );
     $this->assertNotSame($message, $res);
   }

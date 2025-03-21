@@ -23,6 +23,7 @@ $container->compile();
 $app = new Application('Symfony AiBundle examples');
 $app->addCommands([
   $container->get(AiBundle\LLM\Ollama\Examples\GenerateCommand::class),
-  $container->get(AiBundle\LLM\OpenAi\Examples\GenerateCommand::class)
+  $container->get(AiBundle\LLM\OpenAi\Examples\GenerateCommand::class),
+  $container->get(AiBundle\LLM\GoogleAi\Examples\GenerateCommand::class)
 ]);
 $app->run();

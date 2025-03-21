@@ -8,6 +8,7 @@ use AiBundle\LLM\LLMException;
 use AiBundle\LLM\Ollama\Ollama;
 use AiBundle\Prompting\Message;
 use AiBundle\Prompting\MessageRole;
+use AiBundle\Prompting\Messages;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
@@ -15,13 +16,20 @@ use Symfony\Component\Console\Output\OutputInterface;
 
 class CountryInfo {
   public string $name;
-  public string $capital;
+
+  private string $capital;
+  public function setCapital(string $capital): void {
+    $this->capital = strtoupper($capital);
+  }
+
+  public function getCapital(): string {
+    return $this->capital;
+  }
 
   /** @var array<string> */
   #[ArrayType(itemType: 'string')]
   public array $languages;
 }
-
 #[AsCommand('ollama:generate')]
 class GenerateCommand extends Command {
 
@@ -42,19 +50,20 @@ class GenerateCommand extends Command {
   protected function execute(InputInterface $input, OutputInterface $output): int {
     $output->writeln(
       $this->ollama->generate(
-        [
-          new Message(MessageRole::HUMAN, 'Say Hello World')
-        ],
+        (new Messages(
+          new Message(MessageRole::SYSTEM, 'You are a helpful assistant for the user: {{user_name}}'),
+          new Message(MessageRole::HUMAN, 'What is my name?')
+        ))->processMessages(['user_name' => 'John']),
         (new GenerateOptions())
           ->setTemperature(0.8)
-      )->getMessage()->getContent()
+      )->message->content
     );
 
     $res = $this->ollama->generateData([
       new Message(MessageRole::HUMAN, 'Tell me about Canada')
     ], CountryInfo::class);
 
-    $output->writeln(json_encode($res->getData(), JSON_PRETTY_PRINT));
+    print_r($res->data);
 
     return Command::SUCCESS;
   }
