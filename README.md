@@ -1,13 +1,14 @@
-# Symfony Ai Bundle
+# PHP Symfony Ai Bundle
 
 ![example workflow](https://github.com/johannes85/AiBundle/actions/workflows/symfony-bundle.yml/badge.svg)
 
-This Symfony bundle allows to call LLM backends in a generic and simple way.
+This PHP Symfony bundle allows to call LLM backends in a generic and simple way.
 
 The following backends are supported:
 - [OpenAI](https://openai.com/)
 - [Ollama](https://ollama.ai/)
-- [GoogleAI](https://ai.google.dev/)
+- [GoogleAI (Gemini)](https://ai.google.dev/)
+- [Anthropic (Claude)](https://www.anthropic.com/)
 
 ## Requirements
 - PHP >=8.2
@@ -63,6 +64,9 @@ CountryInfo#248 (3) {
 */
 ```
 
+## Planned features
+- Tool calling support
+
 ## Usage
 
 ### Configure LLM backend instances
@@ -87,9 +91,14 @@ services:
   my.googleai:
     class: AiBundle\LLM\GoogleAi\GoogleAi:
     arguments:
-      $model: 'gemini-2.0-flash'
       $apiKey: '...'
+      $model: 'gemini-2.0-flash'
 
+  my.anthrophic:
+    class: AiBundle\LLM\Anthropic\Anthropic:
+    arguments:
+      $apiKey: '...'
+      $model: 'claude-3-5-sonnet-20241022'
 ```
 
 ### Execute standalone examples

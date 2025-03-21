@@ -10,6 +10,7 @@ use Symfony\Component\Serializer\Mapping\Factory\ClassMetadataFactory;
 use Symfony\Component\Serializer\Mapping\Loader\AttributeLoader;
 use Symfony\Component\Serializer\NameConverter\MetadataAwareNameConverter;
 use Symfony\Component\Serializer\Normalizer\ArrayDenormalizer;
+use Symfony\Component\Serializer\Normalizer\BackedEnumNormalizer;
 use Symfony\Component\Serializer\Normalizer\ObjectNormalizer;
 use Symfony\Component\Serializer\Serializer;
 use Symfony\Component\Serializer\SerializerInterface;
@@ -20,6 +21,7 @@ class SerializerFactory {
     $classMetadataFactory = new ClassMetadataFactory(new AttributeLoader());
     return new Serializer(
       [
+        new BackedEnumNormalizer(),
         new ObjectNormalizer(
           nameConverter: new MetadataAwareNameConverter($classMetadataFactory, null),
           propertyTypeExtractor: new PropertyInfoExtractor([], [new PhpDocExtractor(), new ReflectionExtractor()])
