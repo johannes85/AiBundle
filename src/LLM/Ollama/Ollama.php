@@ -30,7 +30,7 @@ class Ollama extends AbstractLLM {
     #[Autowire('@ai_bundle.rest.http_client')] private readonly HttpClientInterface $httpClient,
     #[Autowire('@ai_bundle.rest.serializer')] private readonly Serializer $serializer,
     private readonly SchemaGenerator $schemaGenerator,
-    private float $idleTimeout = 300
+    private readonly float $timeout = 300
   ) {}
 
   /**
@@ -119,7 +119,7 @@ class Ollama extends AbstractLLM {
   ): object|null {
     try {
       $options = [
-        'timeout' => $this->idleTimeout
+        'timeout' => $this->timeout
       ];
 
       if ($payload !== null) {

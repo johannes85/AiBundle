@@ -21,11 +21,11 @@ services:
 
   AiBundle\LLM\OpenAi\OpenAi:
     arguments:
-      $apiKey: 'xxx'
+      $apiKey: '...'
       $model: 'gpt-4o-mini'
 
   AiBundle\LLM\GoogleAi\GoogleAi:
     arguments:
-      $apiKey: 'xxx'
+      $apiKey: '...'
       $model: 'gemini-2.0-flash'
 
