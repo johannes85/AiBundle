@@ -139,14 +139,14 @@ class GenerationConfig {
   }
 
   /**
-   * @return array|null
+   * @return array<mixed>|null
    */
   public function getResponseSchema(): ?array {
     return $this->responseSchema;
   }
 
   /**
-   * @param array|null $responseSchema
+   * @param array<mixed>|null $responseSchema
    * @return static
    */
   public function setResponseSchema(?array $responseSchema): static {
