@@ -30,7 +30,14 @@ $res = $ollama->generate($messages);
 ```php
 class CountryInfo {
   public string $name;
-  public string $capital;
+
+  // Usage of setter for further processing/validation of the set data
+  private string $capital;
+  public function setCapital(string $capital) {
+    $this->capital = $capital;
+  }
+
+  // Array member type hinting via Attribute
   #[ArrayType(itemType: 'string')] public array $languages; 
 }
 
