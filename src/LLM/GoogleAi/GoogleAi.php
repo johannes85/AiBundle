@@ -39,7 +39,8 @@ class GoogleAi extends AbstractLLM {
     private readonly string $model,
     #[Autowire('@ai_bundle.rest.http_client')] private readonly HttpClientInterface $httpClient,
     #[Autowire('@ai_bundle.rest.serializer')] private readonly Serializer $serializer,
-    private readonly SchemaGenerator $schemaGenerator
+    private readonly SchemaGenerator $schemaGenerator,
+    private float $idleTimeout = 300
   ) {}
 
   /**
@@ -154,7 +155,8 @@ class GoogleAi extends AbstractLLM {
       $url = self::ENDPOINT.'/models/'.urlencode($this->model).':'.$resource;
 
       $options = [
-        'query' => ['key' => $this->apiKey]
+        'query' => ['key' => $this->apiKey],
+        'timeout' => $this->idleTimeout
       ];
 
       if ($payload !== null) {
