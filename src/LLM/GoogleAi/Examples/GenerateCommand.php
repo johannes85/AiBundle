@@ -1,9 +1,10 @@
 <?php
 
-namespace AiBundle\LLM\OpenAi\Examples;
+namespace AiBundle\LLM\GoogleAi\Examples;
 
 use AiBundle\Json\Attributes\ArrayType;
 use AiBundle\LLM\GenerateOptions;
+use AiBundle\LLM\GoogleAi\GoogleAi;
 use AiBundle\LLM\LLMException;
 use AiBundle\Prompting\Message;
 use AiBundle\Prompting\MessageRole;
@@ -12,7 +13,6 @@ use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
-use AiBundle\LLM\OpenAi\OpenAi;
 
 class CountryInfo {
   public string $name;
@@ -31,11 +31,11 @@ class CountryInfo {
   public array $languages;
 }
 
-#[AsCommand('openai:generate')]
+#[AsCommand('googleai:generate')]
 class GenerateCommand extends Command {
 
   public function __construct(
-    private OpenAi $openai
+    private GoogleAi $openai
   ) {
     parent::__construct(null);
   }
@@ -59,6 +59,7 @@ class GenerateCommand extends Command {
           ->setTemperature(0.8)
       )->message->content
     );
+
 
     $res =  $this->openai->generateData([
       new Message(MessageRole::HUMAN, 'Tell me about Canada')

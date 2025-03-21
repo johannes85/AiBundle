@@ -1,31 +1,41 @@
 <?php
 
-namespace AiBundle\LLM\Ollama;
+namespace AiBundle\LLM\GoogleAi;
 
 use AiBundle\Json\SchemaGenerator;
 use AiBundle\Json\SchemaGeneratorException;
 use AiBundle\LLM\AbstractLLM;
 use AiBundle\LLM\GenerateOptions;
+use AiBundle\LLM\GoogleAi\Dto\Content;
+use AiBundle\LLM\GoogleAi\Dto\GenerateContentParameters;
+use AiBundle\LLM\GoogleAi\Dto\GenerationConfig;
+use AiBundle\LLM\GoogleAi\Dto\Part;
 use AiBundle\LLM\LLMDataResponse;
-use AiBundle\LLM\LLMException;
 use AiBundle\LLM\LLMResponse;
-use AiBundle\LLM\Ollama\Dto\GenerateChatParameters;
-use AiBundle\LLM\Ollama\Dto\OllamaMessage;
-use AiBundle\LLM\Ollama\Dto\OllamaChatResponse;
 use AiBundle\Prompting\Message;
-use AiBundle\LLM\Ollama\Dto\OllamaOptions;
+use AiBundle\Prompting\MessageRole;
 use SensitiveParameter;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
+use Symfony\Component\Serializer\Exception\ExceptionInterface as SerializerExceptionInterface;
 use Symfony\Component\Serializer\Normalizer\AbstractObjectNormalizer;
 use Symfony\Component\Serializer\Serializer;
-use Symfony\Component\Serializer\Exception\ExceptionInterface as SerializerExceptionInterface;
 use Symfony\Contracts\HttpClient\Exception\ExceptionInterface as HttpClientExceptionInterface;
+use AiBundle\LLM\LLMException;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
+use AiBundle\LLM\GoogleAi\Dto\GoogleAiResponse;
 
-class Ollama extends AbstractLLM {
+class GoogleAi extends AbstractLLM {
+
+  private const ENDPOINT = 'https://generativelanguage.googleapis.com/v1beta';
+
+  public const MESSAGE_ROLE_MAPPING = [
+    MessageRole::AI->name => 'model',
+    MessageRole::HUMAN->name => 'user',
+    MessageRole::SYSTEM->name => 'system',
+  ];
 
   public function __construct(
-    #[SensitiveParameter] private readonly string $endpoint,
+    #[SensitiveParameter] private readonly string $apiKey,
     private readonly string $model,
     #[Autowire('@ai_bundle.rest.http_client')] private readonly HttpClientInterface $httpClient,
     #[Autowire('@ai_bundle.rest.serializer')] private readonly Serializer $serializer,
@@ -36,24 +46,17 @@ class Ollama extends AbstractLLM {
    * @inheritDoc
    *
    * @param array<Message> $messages
+   * @param GenerateOptions|null $options
    * @return LLMResponse
    * @throws LLMException
    */
   public function generate(array $messages, ?GenerateOptions $options = null): LLMResponse {
-    /** @var OllamaChatResponse $res */
-    $res = $this->doRequest(
-      'POST',
-      '/api/chat',
-      OllamaChatResponse::class,
-      (new GenerateChatParameters(
-        $this->model,
-        array_map(fn (Message $message) => OllamaMessage::fromMessage($message), $messages)
-      ))
-        ->setStream(false)
-        ->setOptions($options !== null ? OllamaOptions::fromGenerateOptions($options) : null)
+    $res = $this->abstractGenerate(
+      $messages,
+      $options ? GenerationConfig::fromGenerateOptions($options) : null
     );
     return new LLMResponse(
-      $res->message->toMessage()
+      new Message(MessageRole::AI, $res->candidates[0]->content->parts[0]->getText())
     );
   }
 
@@ -62,6 +65,7 @@ class Ollama extends AbstractLLM {
    *
    * @param array<Message> $messages
    * @param string $datatype
+   * @param GenerateOptions|null $options
    * @return LLMDataResponse
    * @throws LLMException
    */
@@ -75,28 +79,58 @@ class Ollama extends AbstractLLM {
       );
     }
 
-    /** @var OllamaChatResponse $res */
-    $res = $this->doRequest(
-      'POST',
-      '/api/chat',
-      OllamaChatResponse::class,
-      (new GenerateChatParameters(
-        $this->model,
-        array_map(fn (Message $message) => OllamaMessage::fromMessage($message), $messages)
-      ))
-        ->setStream(false)
-        ->setFormat($format)
-        ->setOptions($options !== null ? OllamaOptions::fromGenerateOptions($options) : null)
+    $res = $this->abstractGenerate(
+      $messages,
+      GenerationConfig::fromGenerateOptions($options)
+        ->setResponseMimeType('application/json')
+        ->setResponseSchema($format)
     );
-    $message = $res->message;
+    $responseText = $res->candidates[0]->content->parts[0]->getText();
     try {
-      $object = $this->serializer->deserialize($message->content, $datatype, 'json');
+      $object = $this->serializer->deserialize($responseText, $datatype, 'json');
     } catch (SerializerExceptionInterface $ex) {
       $object = null;
     }
     return new LLMDataResponse(
-      $message->toMessage(),
+      new Message(MessageRole::AI, $responseText),
       $object
+    );
+  }
+
+  /**
+   * Generates content
+   *
+   * @param array $messages
+   * @param GenerationConfig $generationConfig
+   * @return GoogleAiResponse
+   * @throws LLMException
+   */
+  private function abstractGenerate(
+    array $messages,
+    GenerationConfig $generationConfig
+  ): GoogleAiResponse {
+    $systemInstruction = null;
+    if (!empty($messages) && $messages[0]->role === MessageRole::SYSTEM) {
+      $systemInstruction = new Content([(new Part())->setText($messages[0]->content)]);
+      array_shift($messages);
+    }
+    $contents = [];
+    foreach ($messages as $message) {
+      $contents[] = new Content(
+        [(new Part())->setText($message->content)],
+        self::MESSAGE_ROLE_MAPPING[$message->role->name]
+      );
+    }
+
+    return $this->doRequest(
+      'POST',
+      'generateContent',
+      GoogleAiResponse::class,
+      new GenerateContentParameters(
+        $contents,
+        $systemInstruction,
+        $generationConfig
+      )
     );
   }
 
@@ -111,13 +145,17 @@ class Ollama extends AbstractLLM {
    * @throws LLMException
    */
   private function doRequest(
-    string $method, 
+    string $method,
     string $resource,
     string $responseType,
     ?object $payload = null
   ): object|null {
     try {
-      $options = [];
+      $url = self::ENDPOINT.'/models/'.urlencode($this->model).':'.$resource;
+
+      $options = [
+        'query' => ['key' => $this->apiKey]
+      ];
 
       if ($payload !== null) {
         try {
@@ -134,13 +172,13 @@ class Ollama extends AbstractLLM {
 
       $res = $this->httpClient->request(
         $method,
-        $this->endpoint . $resource,
+        $url,
         $options
       );
 
       if (($statusCode = $res->getStatusCode()) > 399) {
         throw new LLMException(sprintf(
-          'Unexpected answer from Ollama backend: [%d] %s',
+          'Unexpected answer from OpenAi backend: [%d] %s',
           $statusCode,
           $res->getContent(false)
         ));
@@ -150,13 +188,13 @@ class Ollama extends AbstractLLM {
         return $this->serializer->deserialize($res->getContent(), $responseType, 'json');
       } catch (SerializerExceptionInterface $ex) {
         throw new LLMException(
-          'Error while deserializing Ollama response: ' . $res->getContent(),
+          'Error while deserializing OpenAi response: ' . $res->getContent(),
           previous: $ex
         );
       }
     } catch (HttpClientExceptionInterface $ex) {
       throw new LLMException(
-        'Error sending request to Ollama backend (' . $ex->getMessage() . ')', 
+        'Error sending request to OpenAi backend (' . $ex->getMessage() . ')',
         previous: $ex
       );
     }

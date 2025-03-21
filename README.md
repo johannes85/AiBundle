@@ -7,6 +7,7 @@ This Symfony bundle allows to call LLM backends in a generic and simple way.
 The following backends are supported:
 - [OpenAI](https://openai.com/)
 - [Ollama](https://ollama.ai/)
+- [GoogleAI](https://ai.google.dev/)
 
 ## Requirements
 - PHP >=8.2
@@ -82,6 +83,13 @@ services:
     arguments:
       $apiKey: '...'
       $model: 'gpt-4o-mini'
+
+  my.googleai:
+    class: AiBundle\LLM\GoogleAi\GoogleAi:
+    arguments:
+      $model: 'gemini-2.0-flash'
+      $apiKey: '...'
+
 ```
 
 ### Execute standalone examples

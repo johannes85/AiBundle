@@ -27,11 +27,11 @@ class OpenAi extends AbstractLLM {
   private const ENDPOINT = 'https://api.openai.com/v1';
 
   public function __construct(
-    #[SensitiveParameter] private string $apiKey,
-    private string $model,
-    #[Autowire('@ai_bundle.rest.http_client')] private HttpClientInterface $httpClient,
-    #[Autowire('@ai_bundle.rest.serializer')] private Serializer $serializer,
-    private SchemaGenerator $schemaGenerator
+    #[SensitiveParameter] private readonly string $apiKey,
+    private readonly string $model,
+    #[Autowire('@ai_bundle.rest.http_client')] private readonly HttpClientInterface $httpClient,
+    #[Autowire('@ai_bundle.rest.serializer')] private readonly Serializer $serializer,
+    private readonly SchemaGenerator $schemaGenerator
   ) {}
 
   /**
@@ -55,7 +55,7 @@ class OpenAi extends AbstractLLM {
       )
     );
     return new LLMResponse(
-      new Message(MessageRole::AI, $res->getChoices()[0]->getMessage()->getContent())
+      new Message(MessageRole::AI, $res->choices[0]->message->content)
     );
   }
 
@@ -83,10 +83,11 @@ class OpenAi extends AbstractLLM {
       'POST',
       '/chat/completions',
       ChatCompletionResponse::class,
-      (new ChatCompletionRequest(
+      ChatCompletionRequest::fromGenerateOptions(
         $this->model,
         array_map(fn (Message $message) => AbstractOpenAiMessage::fromMessage($message), $messages),
-      ))
+        $options
+      )
         ->setResponseFormat([
           'type' => 'json_schema',
           'json_schema' => [
@@ -95,14 +96,14 @@ class OpenAi extends AbstractLLM {
           ]
         ])
     );
-    $message = $res->getChoices()[0]->getMessage();
+    $message = $res->choices[0]->message;
     try {
-      $object = $this->serializer->deserialize($message->getContent(), $datatype, 'json');
+      $object = $this->serializer->deserialize($message->content, $datatype, 'json');
     } catch (SerializerExceptionInterface $ex) {
       $object = null;
     }
     return new LLMDataResponse(
-      new Message(MessageRole::AI, $message->getContent()),
+      new Message(MessageRole::AI, $message->content),
       $object
     );
   }
@@ -151,7 +152,7 @@ class OpenAi extends AbstractLLM {
 
       if (($statusCode = $res->getStatusCode()) > 399) {
         throw new LLMException(sprintf(
-          'Unexpected answer from Ollama backend: [%d] %s',
+          'Unexpected answer from OpenAi backend: [%d] %s',
           $statusCode,
           $res->getContent(false)
         ));
@@ -161,13 +162,13 @@ class OpenAi extends AbstractLLM {
         return $this->serializer->deserialize($res->getContent(), $responseType, 'json');
       } catch (SerializerExceptionInterface $ex) {
         throw new LLMException(
-          'Error while deserializing Ollama response: ' . $res->getContent(),
+          'Error while deserializing OpenAi response: ' . $res->getContent(),
           previous: $ex
         );
       }
     } catch (HttpClientExceptionInterface $ex) {
       throw new LLMException(
-        'Error sending request to Ollama backend (' . $ex->getMessage() . ')',
+        'Error sending request to OpenAi backend (' . $ex->getMessage() . ')',
         previous: $ex
       );
     }
