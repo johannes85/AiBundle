@@ -31,7 +31,8 @@ class OpenAi extends AbstractLLM {
     private readonly string $model,
     #[Autowire('@ai_bundle.rest.http_client')] private readonly HttpClientInterface $httpClient,
     #[Autowire('@ai_bundle.rest.serializer')] private readonly Serializer $serializer,
-    private readonly SchemaGenerator $schemaGenerator
+    private readonly SchemaGenerator $schemaGenerator,
+    private float $idleTimeout = 300
   ) {}
 
   /**
@@ -128,7 +129,8 @@ class OpenAi extends AbstractLLM {
       $options = [
         'headers' => [
           'Authorization' => 'Bearer '.$this->apiKey
-        ]
+        ],
+        'timeout' => $this->idleTimeout
       ];
 
       if ($payload !== null) {
