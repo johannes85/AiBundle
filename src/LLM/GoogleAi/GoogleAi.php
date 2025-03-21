@@ -101,7 +101,7 @@ class GoogleAi extends AbstractLLM {
   /**
    * Generates content
    *
-   * @param array $messages
+   * @param array<Message> $messages
    * @param GenerationConfig $generationConfig
    * @return GoogleAiResponse
    * @throws LLMException
