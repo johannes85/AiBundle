@@ -2,15 +2,23 @@
 
 namespace AiBundle\LLM\Ollama\Dto;
 
+use AiBundle\Prompting\File;
+use AiBundle\Prompting\FileType;
 use AiBundle\Prompting\Message;
 use AiBundle\Prompting\MessageRole;
 use InvalidArgumentException;
 
 class OllamaMessage {
 
+  /**
+   * @param string $role
+   * @param string $content
+   * @param array<string> $images
+   */
   public function __construct(
     public readonly string $role,
-    public readonly string $content
+    public readonly string $content,
+    public readonly array $images = []
   ) {}
 
   /**
@@ -26,7 +34,13 @@ class OllamaMessage {
         MessageRole::HUMAN => 'user',
         MessageRole::SYSTEM => 'system'
       },
-      $message->content
+      $message->content,
+
+      array_map(
+        fn (File $file) => $file->getBase64Content(),
+        /** @phpstan-ignore identical.alwaysTrue */
+        array_filter($message->files, fn (File $file) => $file->type === FileType::IMAGE)
+      )
     );
   }
 

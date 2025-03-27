@@ -12,7 +12,7 @@ use ReflectionProperty;
 class SchemaGenerator {
 
   /**
-   * Generates schema for a class
+   * Generates json schema for a class
    *
    * @param string $className
    * @return array<mixed>

@@ -9,9 +9,11 @@ use AiBundle\LLM\GenerateOptions;
 use AiBundle\LLM\GoogleAi\Dto\Content;
 use AiBundle\LLM\GoogleAi\Dto\GenerateContentParameters;
 use AiBundle\LLM\GoogleAi\Dto\GenerationConfig;
+use AiBundle\LLM\GoogleAi\Dto\InlineData;
 use AiBundle\LLM\GoogleAi\Dto\Part;
 use AiBundle\LLM\LLMDataResponse;
 use AiBundle\LLM\LLMResponse;
+use AiBundle\Prompting\FileType;
 use AiBundle\Prompting\Message;
 use AiBundle\Prompting\MessageRole;
 use SensitiveParameter;
@@ -102,13 +104,13 @@ class GoogleAi extends AbstractLLM {
    * Generates content
    *
    * @param array<Message> $messages
-   * @param GenerationConfig $generationConfig
+   * @param ?GenerationConfig $generationConfig
    * @return GoogleAiResponse
    * @throws LLMException
    */
   private function abstractGenerate(
     array $messages,
-    GenerationConfig $generationConfig
+    ?GenerationConfig $generationConfig = null
   ): GoogleAiResponse {
     $systemInstruction = null;
     if (!empty($messages) && $messages[0]->role === MessageRole::SYSTEM) {
@@ -117,8 +119,22 @@ class GoogleAi extends AbstractLLM {
     }
     $contents = [];
     foreach ($messages as $message) {
+      $parts = [];
+      foreach ($message->files as $file) {
+        /** @phpstan-ignore notIdentical.alwaysFalse */
+        if ($file->type !== FileType::IMAGE) {
+          continue;
+        }
+        $parts[] = (new Part())->setInlineData(
+          new InlineData(
+            $file->mimeType,
+            $file->getBase64Content()
+          )
+        );
+      }
+      $parts[] = (new Part())->setText($message->content);
       $contents[] = new Content(
-        [(new Part())->setText($message->content)],
+        $parts,
         self::MESSAGE_ROLE_MAPPING[$message->role->name]
       );
     }
@@ -180,7 +196,7 @@ class GoogleAi extends AbstractLLM {
 
       if (($statusCode = $res->getStatusCode()) > 399) {
         throw new LLMException(sprintf(
-          'Unexpected answer from OpenAi backend: [%d] %s',
+          'Unexpected answer from GoogleAi backend: [%d] %s',
           $statusCode,
           $res->getContent(false)
         ));
@@ -190,13 +206,13 @@ class GoogleAi extends AbstractLLM {
         return $this->serializer->deserialize($res->getContent(), $responseType, 'json');
       } catch (SerializerExceptionInterface $ex) {
         throw new LLMException(
-          'Error while deserializing OpenAi response: ' . $res->getContent(),
+          'Error while deserializing GoogleAi response: ' . $res->getContent(),
           previous: $ex
         );
       }
     } catch (HttpClientExceptionInterface $ex) {
       throw new LLMException(
-        'Error sending request to OpenAi backend (' . $ex->getMessage() . ')',
+        'Error sending request to GoogleAi backend (' . $ex->getMessage() . ')',
         previous: $ex
       );
     }

@@ -1,6 +1,8 @@
 #!/usr/bin/php
 <?php
 
+use AiBundle\Examples\AnalyzeReceiptCommand;use AiBundle\Examples\PersistentChatCommand;
+use AiBundle\Examples\SolveCaptchaCommand;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Config\FileLocator;
 use Symfony\Component\Console\Application;
@@ -25,6 +27,9 @@ $app->addCommands([
   $container->get(AiBundle\LLM\Ollama\Examples\GenerateCommand::class),
   $container->get(AiBundle\LLM\OpenAi\Examples\GenerateCommand::class),
   $container->get(AiBundle\LLM\GoogleAi\Examples\GenerateCommand::class),
-  $container->get(AiBundle\LLM\Anthropic\Examples\GenerateCommand::class)
+  $container->get(AiBundle\LLM\Anthropic\Examples\GenerateCommand::class),
+  $container->get(PersistentChatCommand::class),
+  $container->get(AnalyzeReceiptCommand::class),
+  $container->get(SolveCaptchaCommand::class),
 ]);
 $app->run();

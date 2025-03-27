@@ -2,12 +2,21 @@
 
 namespace AiBundle\Prompting;
 
-class Message {
+use Stringable;
 
+class Message implements Stringable {
+
+  /**
+   * @param MessageRole $role
+   * @param string $content
+   * @param bool $placeholderProcessing
+   * @param array<File> $files
+   */
   public function __construct(
     public readonly MessageRole $role,
     public readonly string $content,
-    private bool $placeholderProcessing = true
+    private readonly bool $placeholderProcessing = false,
+    public readonly array $files = []
   ) {}
 
   /**
@@ -25,6 +34,18 @@ class Message {
         $this->content
       ) : $this->content,
       false
+    );
+  }
+
+  /**
+   * @inheritDoc
+   */
+  public function __toString() {
+    return sprintf(
+      "Type: %s\nContent: %s\nProcess placeholders: %s",
+      $this->role->name,
+      $this->content,
+      $this->placeholderProcessing ? 'Yes' : 'No'
     );
   }
 

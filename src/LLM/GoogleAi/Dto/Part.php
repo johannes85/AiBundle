@@ -5,7 +5,7 @@ namespace AiBundle\LLM\GoogleAi\Dto;
 class Part {
 
   private ?string $text = null;
-  private ?object $inlineData = null;
+  private ?InlineData $inlineData = null;
   private ?object $functionCall = null;
   private ?object $functionResponse = null;
   private ?object $fileData = null;
@@ -29,17 +29,17 @@ class Part {
   }
 
   /**
-   * @return object|null
+   * @return InlineData|null
    */
-  public function getInlineData(): ?object {
+  public function getInlineData(): ?InlineData {
     return $this->inlineData;
   }
 
   /**
-   * @param object|null $inlineData
+   * @param InlineData|null $inlineData
    * @return static
    */
-  public function setInlineData(?object $inlineData): static {
+  public function setInlineData(?InlineData $inlineData): static {
     $this->inlineData = $inlineData;
     return $this;
   }

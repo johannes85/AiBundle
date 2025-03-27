@@ -2,7 +2,7 @@
 
 namespace AiBundle\Prompting;
 
-class Messages {
+class Messages implements MessagesInterface {
 
   /** @var array<Message> */
   private array $messages = [];
@@ -12,10 +12,7 @@ class Messages {
   }
 
   /**
-   * Builds message instances for prompting usage by replacing placeholders with provided values.
-   *
-   * @param array<string, scalar> $placeholders
-   * @return array<Message>
+   * @inheritDoc
    */
   public function processMessages(array $placeholders = []): array {
     $ret = [];

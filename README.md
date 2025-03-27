@@ -5,10 +5,13 @@
 This PHP Symfony bundle allows to call LLM backends in a generic and simple way.
 
 The following backends are supported:
-- [OpenAI](https://openai.com/)
-- [Ollama](https://ollama.ai/)
-- [GoogleAI (Gemini)](https://ai.google.dev/)
-- [Anthropic (Claude)](https://www.anthropic.com/)
+
+| Backend      | Text generation | Image processing  | Info                             
+|--------------|-----------------|-------------------|----------------------------------|
+| OpenAI       | ✅               | ❌ (WIP)           | https://openai.com/              |
+| Ollama       | ✅               | ✅                 | https://ollama.ai/               |
+| GoogleAI     | ✅               | ✅                 | https://ai.google.dev            |
+| Anthropic    | ✅               | ✅                 | https://www.anthropic.com/       |
 
 ## Requirements
 - PHP >=8.2
@@ -27,6 +30,24 @@ $res = $opanAi->generate($messages);
 $res = $ollama->generate($messages);
 ...
 ```
+
+### Image processing:
+```php
+$messages = [
+  new Message(
+    MessageRole::HUMAN,
+    'What is the content of this image?',
+    files: [File::fromPath(FileType::IMAGE, 'image/jpg', __DIR__.'/image.jpg')]
+  )
+];
+$res = $llm->generate($messages);
+```
+
+### Persistent message history:
+See example: ```AiBundle\Examples\PersistentChatCommand```
+
+#### The following store backends are supported:
+- PSR-6 compatible file cache: ```AiBundle\Prompting\MessageStore\Psr6CacheMessageStore```
 
 ### Support for structured responses with deserialization in an object instance:
 ```php
@@ -63,9 +84,6 @@ CountryInfo#248 (3) {
 }
 */
 ```
-
-## Planned features
-- Tool calling support
 
 ## Usage
 

@@ -51,7 +51,7 @@ class GenerateCommand extends Command {
     $output->writeln(
       $this->ollama->generate(
         (new Messages(
-          new Message(MessageRole::SYSTEM, 'You are a helpful assistant for the user: {{user_name}}'),
+          new Message(MessageRole::SYSTEM, 'You are a helpful assistant for the user: {{user_name}}', true),
           new Message(MessageRole::HUMAN, 'What is my name?')
         ))->processMessages(['user_name' => 'John']),
         (new GenerateOptions())

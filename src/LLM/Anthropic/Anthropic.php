@@ -81,7 +81,7 @@ class Anthropic extends AbstractLLM {
         ->setSystem($systemInstruction)
     );
     return new LLMResponse(
-      new Message(MessageRole::AI, $res->content[0]->text)
+      new Message(MessageRole::AI, $res->content[0]->getText())
     );
   }
 
@@ -135,12 +135,12 @@ class Anthropic extends AbstractLLM {
 
     $content = $res->content[0];
     try {
-      $object = $this->serializer->denormalize($content->input, $datatype);
+      $object = $this->serializer->denormalize($content->getInput(), $datatype);
     } catch (SerializerExceptionInterface $ex) {
       $object = null;
     }
     return new LLMDataResponse(
-      new Message(MessageRole::AI, $content->text ?? ''),
+      new Message(MessageRole::AI, $content->getText() ?? ''),
       $object
     );
   }

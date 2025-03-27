@@ -2,6 +2,20 @@ services:
   _defaults:
     autowire: true
 
+  ai_bundle.examples.cache.filesystem_adapter:
+    class: Symfony\Component\Cache\Adapter\FilesystemAdapter
+    arguments:
+      $namespace: 'ai_bundle_examples'
+
+  AiBundle\Prompting\MessageStore\Psr6CacheMessageStore:
+    arguments:
+      $cache: '@ai_bundle.examples.cache.filesystem_adapter'
+      $ttl: 3600
+
+  AiBundle\Examples\:
+    resource: '../src/Examples'
+    public: true;
+
   AiBundle\LLM\Ollama\Examples\:
     resource: '../src/LLM/Ollama/Examples'
     public: true;
@@ -21,7 +35,7 @@ services:
   AiBundle\LLM\Ollama\Ollama:
     arguments:
       $endpoint: 'http://127.0.0.1:11434'
-      $model: 'gemma2'
+      $model: 'gemma3:latest'
 
   AiBundle\LLM\OpenAi\OpenAi:
     arguments:
