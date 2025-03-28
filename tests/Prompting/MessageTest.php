@@ -10,7 +10,8 @@ class MessageTest extends TestCase {
   public function test_applyPlaceholders() {
     $message = new Message(
       MessageRole::HUMAN,
-      'content {{key1}} {{key2}} {{invalidKey}}'
+      'content {{key1}} {{key2}} {{invalidKey}}',
+      true
     );
     $res = $message->applyPlaceholders([
       'key1' => 'value1',
@@ -27,7 +28,8 @@ class MessageTest extends TestCase {
   public function test_applyPlaceholders_scalerTypes() {
     $message = new Message(
       MessageRole::HUMAN,
-      'content {{bool}} {{int}} {{float}} {{string}}'
+      'content {{bool}} {{int}} {{float}} {{string}}',
+      true
     );
     $res = $message->applyPlaceholders([
       'bool' => true,

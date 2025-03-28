@@ -142,7 +142,7 @@ The following values are supported:
 - anthropic
 - mistral_ai
 
-Before using the examples, you have to set the api key for the corresponding backend as a environment variable:
+Before using the examples, you have to set the api key for the corresponding backend as an environment variable:
 ```bash
  export MISTRAL_AI_APIKEY=...
 export ANTHROPIC_APIKEY=...

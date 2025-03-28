@@ -64,7 +64,11 @@ class PersistentChatCommand extends AbstractExampleCommand {
 
     $messages = new PersistentMessages(
       new MessageStoreDebugTap($this->messageStore, $output),
-      [new Message(MessageRole::SYSTEM, 'You are a helpful assistant for the user with the name: {{user_name}}', true)],
+      [new Message(
+        MessageRole::SYSTEM,
+        'You are a helpful assistant for the user with the name: {{user_name}}',
+        true
+      )],
       $uuid
     );
     $output->writeln(sprintf('Started chat with session ID: %s', $messages->sessionUid));
