@@ -6,12 +6,13 @@ This PHP Symfony bundle allows to call LLM backends in a generic and simple way.
 
 The following backends are supported:
 
-| Backend      | Text generation | Image processing  | Info                             
-|--------------|-----------------|-------------------|----------------------------------|
-| OpenAI       | ✅               | ❌ (WIP)           | https://openai.com/              |
-| Ollama       | ✅               | ✅                 | https://ollama.ai/               |
-| GoogleAI     | ✅               | ✅                 | https://ai.google.dev            |
-| Anthropic    | ✅               | ✅                 | https://www.anthropic.com/       |
+| Backend    | Text generation | Image processing  | Info                       
+|------------|-----------------|-------------------|----------------------------|
+| OpenAI     | ✅               | ✅                 | https://openai.com/        |
+| Ollama     | ✅               | ✅                 | https://ollama.ai/         |
+| GoogleAI   | ✅               | ✅                 | https://ai.google.dev      |
+| Anthropic  | ✅               | ✅                 | https://www.anthropic.com/ |
+| Mistral AI | ✅               | ✅                 | https://mistral.ai/        |
 
 ## Requirements
 - PHP >=8.2
@@ -125,7 +126,26 @@ They can be executed by a central console command similar to the Symfony console
 
 ```bash
 composer install
-php bin/console 
+php bin/console example:... --llm= ollama
 ```
 
-Before using, you have to configure the backend instances in the `config/services_example.yaml` file.
+You can get a list of available examples by executing:
+```bash
+php bin/console
+```
+
+The llm backend to use can be set via the ```--llm``` option.
+The following values are supported:
+- ollama (default)
+- open_ai
+- google_ai
+- anthropic
+- mistral_ai
+
+Before using the examples, you have to set the api key for the corresponding backend as a environment variable:
+```bash
+ export MISTRAL_AI_APIKEY=...
+export ANTHROPIC_APIKEY=...
+export GOOGLE_AI_APIKEY=...
+export OPEN_AI_APIKEY=...
+```

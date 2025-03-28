@@ -11,8 +11,15 @@ use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 
-#[AsCommand('examples:solve-captcha')]
-class SolveCaptchaCommand extends AbstractExampleCommand {
+class Car {
+  public function __construct(
+    public readonly string $licensePlate,
+    public readonly string $manufacturer
+  ) {}
+}
+
+#[AsCommand('examples:detect-licence-plate')]
+class DetectLicencePlate extends AbstractExampleCommand {
 
   /**
    * @inheritDoc
@@ -24,18 +31,17 @@ class SolveCaptchaCommand extends AbstractExampleCommand {
   protected function execute(InputInterface $input, OutputInterface $output): int {
     parent::execute($input, $output);
 
-    $ret = $this->llm->generate([
+    $ret = $this->llm->generateData([
       new Message(
         MessageRole::HUMAN,
         <<<PROMPT
-        Please extract the math problem from the image and solve it.
-        Return the result as a number only.
+        Please extract the content of the license plate and the car manufacturer from the image.
         PROMPT,
-        files: [File::fromPath(FileType::IMAGE, 'image/png', __DIR__.'/Resources/captcha.png')]
+        files: [File::fromPath(FileType::IMAGE, 'image/png', __DIR__.'/Resources/car.png')]
       )
-    ]);
+    ], Car::class);
 
-    $output->writeln($ret->message->content);
+    $output->writeln(json_encode($ret->data));
 
     return Command::SUCCESS;
   }

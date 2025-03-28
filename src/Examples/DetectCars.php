@@ -11,8 +11,8 @@ use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 
-#[AsCommand('examples:solve-captcha')]
-class SolveCaptchaCommand extends AbstractExampleCommand {
+#[AsCommand('examples:detect-cars')]
+class DetectCars extends AbstractExampleCommand {
 
   /**
    * @inheritDoc
@@ -28,10 +28,9 @@ class SolveCaptchaCommand extends AbstractExampleCommand {
       new Message(
         MessageRole::HUMAN,
         <<<PROMPT
-        Please extract the math problem from the image and solve it.
-        Return the result as a number only.
+        How many cars are in the driveway and what are the brands and color of those cars.
         PROMPT,
-        files: [File::fromPath(FileType::IMAGE, 'image/png', __DIR__.'/Resources/captcha.png')]
+        files: [File::fromPath(FileType::IMAGE, 'image/png', __DIR__.'/Resources/cars2.png')]
       )
     ]);
 

@@ -1,7 +1,11 @@
 #!/usr/bin/php
 <?php
 
-use AiBundle\Examples\AnalyzeReceiptCommand;use AiBundle\Examples\PersistentChatCommand;
+use AiBundle\Examples\AnalyzeReceiptCommand;
+use AiBundle\Examples\BasicExamplesCommand;
+use AiBundle\Examples\DetectCars;
+use AiBundle\Examples\DetectLicencePlate;
+use AiBundle\Examples\PersistentChatCommand;
 use AiBundle\Examples\SolveCaptchaCommand;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Config\FileLocator;
@@ -20,16 +24,15 @@ $container->register(LoggerInterface::class)
 $loader = new YamlFileLoader($container, new FileLocator(__DIR__ . '/../config'));
 $loader->load('services.yaml');
 $loader->load('services_examples.yaml');
-$container->compile();
+$container->compile(true);
 
 $app = new Application('Symfony AiBundle examples');
 $app->addCommands([
-  $container->get(AiBundle\LLM\Ollama\Examples\GenerateCommand::class),
-  $container->get(AiBundle\LLM\OpenAi\Examples\GenerateCommand::class),
-  $container->get(AiBundle\LLM\GoogleAi\Examples\GenerateCommand::class),
-  $container->get(AiBundle\LLM\Anthropic\Examples\GenerateCommand::class),
   $container->get(PersistentChatCommand::class),
   $container->get(AnalyzeReceiptCommand::class),
   $container->get(SolveCaptchaCommand::class),
+  $container->get(DetectLicencePlate::class),
+  $container->get(BasicExamplesCommand::class),
+  $container->get(DetectCars::class)
 ]);
 $app->run();

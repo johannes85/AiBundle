@@ -19,6 +19,7 @@ class File {
    * Creates a new instance from a string.
    *
    * @param FileType $type
+   * @param string $mimeType
    * @param string $fileContent
    * @return self
    */
@@ -33,6 +34,7 @@ class File {
    * Cretaes a new instance from a file path.
    *
    * @param FileType $type
+   * @param string $mimeType
    * @param string $path
    * @return self
    */

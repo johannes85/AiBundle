@@ -2,8 +2,6 @@
 
 namespace AiBundle\Examples;
 
-use AiBundle\Json\Attributes\ArrayType;
-use AiBundle\LLM\GoogleAi\GoogleAi;
 use AiBundle\LLM\LLMException;
 use AiBundle\LLM\Ollama\Ollama;
 use AiBundle\Prompting\File;
@@ -14,8 +12,6 @@ use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
-use Symfony\Component\DependencyInjection\Attribute\Autowire;
-
 
 class Receipt {
 
@@ -26,13 +22,7 @@ class Receipt {
 
 }
 #[AsCommand('examples:analyze-receipt')]
-class AnalyzeReceiptCommand extends Command {
-
-  public function __construct(
-    private readonly Ollama $llm
-  ) {
-    parent::__construct();
-  }
+class AnalyzeReceiptCommand extends AbstractExampleCommand {
 
   /**
    * @inheritDoc
@@ -40,9 +30,9 @@ class AnalyzeReceiptCommand extends Command {
    * @param InputInterface $input
    * @param OutputInterface $output
    * @return int
-   * @throws LLMException
    */
   protected function execute(InputInterface $input, OutputInterface $output): int {
+    parent::execute($input, $output);
 
     $ret = $this->llm->generateData([
       new Message(

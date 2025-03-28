@@ -1,11 +1,9 @@
 <?php
 
-namespace AiBundle\LLM\Ollama\Examples;
+namespace AiBundle\Examples;
 
 use AiBundle\Json\Attributes\ArrayType;
 use AiBundle\LLM\GenerateOptions;
-use AiBundle\LLM\LLMException;
-use AiBundle\LLM\Ollama\Ollama;
 use AiBundle\Prompting\Message;
 use AiBundle\Prompting\MessageRole;
 use AiBundle\Prompting\Messages;
@@ -30,14 +28,9 @@ class CountryInfo {
   #[ArrayType(itemType: 'string')]
   public array $languages;
 }
-#[AsCommand('ollama:generate')]
-class GenerateCommand extends Command {
 
-  public function __construct(
-    private Ollama $ollama
-  ) {
-    parent::__construct(null);
-  }
+#[AsCommand('examples:basic')]
+class BasicExamplesCommand extends AbstractExampleCommand {
 
   /**
    * @inheritDoc
@@ -45,11 +38,12 @@ class GenerateCommand extends Command {
    * @param InputInterface $input
    * @param OutputInterface $output
    * @return int
-   * @throws LLMException
    */
   protected function execute(InputInterface $input, OutputInterface $output): int {
+    parent::execute($input, $output);
+
     $output->writeln(
-      $this->ollama->generate(
+      $this->llm->generate(
         (new Messages(
           new Message(MessageRole::SYSTEM, 'You are a helpful assistant for the user: {{user_name}}', true),
           new Message(MessageRole::HUMAN, 'What is my name?')
@@ -59,7 +53,7 @@ class GenerateCommand extends Command {
       )->message->content
     );
 
-    $res = $this->ollama->generateData([
+    $res =  $this->llm->generateData([
       new Message(MessageRole::HUMAN, 'Tell me about Canada')
     ], CountryInfo::class);
 

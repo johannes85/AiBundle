@@ -2,8 +2,6 @@
 
 namespace AiBundle\Examples;
 
-use AiBundle\LLM\LLMException;
-use AiBundle\LLM\Ollama\Ollama;
 use AiBundle\Prompting\Message;
 use AiBundle\Prompting\MessageRole;
 use AiBundle\Prompting\MessageStore\MessageStoreDebugTap;
@@ -11,30 +9,35 @@ use AiBundle\Prompting\MessageStore\Psr6CacheMessageStore;
 use AiBundle\Prompting\PersistentMessages;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
+use Symfony\Component\Console\Exception\MissingInputException;
+use Symfony\Component\Console\Exception\RuntimeException;
 use Symfony\Component\Console\Helper\QuestionHelper;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Question\Question;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
+use Symfony\Component\DependencyInjection\Container;
 use Symfony\Component\Uid\Uuid;
-use Symfony\Component\Uid\UuidV3;
 
 #[AsCommand('examples:persistent-chat')]
-class PersistentChatCommand extends Command {
+class PersistentChatCommand extends AbstractExampleCommand {
 
   private const CHAT_UUID_NAMESPACE = '521b8d45-c08d-4272-a2d0-ec21eb565a7b';
 
   public function __construct(
-    private readonly Psr6CacheMessageStore $messageStore,
-    private readonly Ollama $llm
+    #[Autowire('@service_container')] Container $container,
+    private readonly Psr6CacheMessageStore $messageStore
   ) {
-    parent::__construct();
+    parent::__construct($container);
   }
 
   /**
    * @inheritDoc
    */
   protected function configure() {
+    parent::configure();
+
     $this->addArgument('uid', InputArgument::OPTIONAL, 'Session UID', null);
   }
 
@@ -44,9 +47,11 @@ class PersistentChatCommand extends Command {
    * @param InputInterface $input
    * @param OutputInterface $output
    * @return int
-   * @throws LLMException
+   * @throws MissingInputException
+   * @throws RuntimeException
    */
   protected function execute(InputInterface $input, OutputInterface $output): int {
+    parent::execute($input, $output);
 
     /** @var QuestionHelper $helper */
     $helper = $this->getHelper('question');

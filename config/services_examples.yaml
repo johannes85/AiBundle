@@ -16,39 +16,37 @@ services:
     resource: '../src/Examples'
     public: true;
 
-  AiBundle\LLM\Ollama\Examples\:
-    resource: '../src/LLM/Ollama/Examples'
-    public: true;
-
-  AiBundle\LLM\OpenAi\Examples\:
-    resource: '../src/LLM/Ollama/Examples'
-    public: true;
-
-  AiBundle\LLM\GoogleAi\Examples\:
-    resource: '../src/LLM/Ollama/Examples'
-    public: true;
-
-  AiBundle\LLM\Anthropic\Examples\:
-    resource: '../src/LLM/Anthropic/Examples'
-    public: true;
-
-  AiBundle\LLM\Ollama\Ollama:
+  ai_bundle.llm.ollama:
+    public: true
+    class: AiBundle\LLM\Ollama\Ollama
     arguments:
       $endpoint: 'http://127.0.0.1:11434'
       $model: 'gemma3:latest'
 
-  AiBundle\LLM\OpenAi\OpenAi:
+  ai_bundle.llm.open_ai:
+    public: true
+    class: AiBundle\LLM\OpenAi\OpenAi
     arguments:
-      $apiKey: '...'
+      $apiKey: '%env(string:OPEN_AI_APIKEY)%'
       $model: 'gpt-4o-mini'
 
-  AiBundle\LLM\GoogleAi\GoogleAi:
+  ai_bundle.llm.google_ai:
+    public: true
+    class: AiBundle\LLM\GoogleAi\GoogleAi
     arguments:
-      $apiKey: '...'
+      $apiKey: '%env(string:GOOGLE_AI_APIKEY)%'
       $model: 'gemini-2.0-flash'
 
-  AiBundle\LLM\Anthropic\Anthropic:
+  ai_bundle.llm.anthropic:
+    public: true
+    class: AiBundle\LLM\Anthropic\Anthropic
     arguments:
-      $apiKey: '...'
+      $apiKey: '%env(string:ANTHROPIC_APIKEY)%'
       $model: 'claude-3-5-sonnet-20241022'
 
+  ai_bundle.llm.mistral_ai:
+    public: true
+    class: AiBundle\LLM\MistralAi\MistralAi
+    arguments:
+      $apiKey: '%env(string:MISTRAL_AI_APIKEY)%'
+      $model: 'mistral-small-latest'

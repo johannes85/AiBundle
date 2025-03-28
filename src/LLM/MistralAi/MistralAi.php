@@ -1,6 +1,6 @@
 <?php
 
-namespace AiBundle\LLM\OpenAi;
+namespace AiBundle\LLM\MistralAi;
 
 use AiBundle\Json\SchemaGenerator;
 use AiBundle\Json\SchemaGeneratorException;
@@ -8,9 +8,11 @@ use AiBundle\LLM\AbstractLLM;
 use AiBundle\LLM\GenerateOptions;
 use AiBundle\LLM\LLMDataResponse;
 use AiBundle\LLM\LLMResponse;
-use AiBundle\LLM\OpenAi\Dto\ChatCompletionRequest;
-use AiBundle\LLM\OpenAi\Dto\ChatCompletionResponse;
-use AiBundle\LLM\OpenAi\Dto\OpenAiMessage;
+use AiBundle\LLM\MistralAi\Dto\ChatCompletionRequest;
+use AiBundle\LLM\MistralAi\Dto\ChatCompletionResponse;
+use AiBundle\LLM\MistralAi\Dto\JsonSchema;
+use AiBundle\LLM\MistralAi\Dto\ResponseFormat;
+use AiBundle\LLM\MistralAi\Dto\MistralAiMessage;
 use AiBundle\Prompting\Message;
 use AiBundle\Prompting\MessageRole;
 use SensitiveParameter;
@@ -22,9 +24,9 @@ use Symfony\Contracts\HttpClient\Exception\ExceptionInterface as HttpClientExcep
 use AiBundle\LLM\LLMException;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
-class OpenAi extends AbstractLLM {
+class MistralAi extends AbstractLLM {
 
-  private const ENDPOINT = 'https://api.openai.com/v1';
+  private const ENDPOINT = 'https://api.mistral.ai/v1';
 
   public function __construct(
     #[SensitiveParameter] private readonly string $apiKey,
@@ -51,7 +53,7 @@ class OpenAi extends AbstractLLM {
       ChatCompletionResponse::class,
       ChatCompletionRequest::fromGenerateOptions(
         $this->model,
-        array_map(fn (Message $message) => OpenAiMessage::fromMessage($message), $messages),
+        array_map(fn (Message $message) => MistralAiMessage::fromMessage($message), $messages),
         $options
       )
     );
@@ -86,16 +88,13 @@ class OpenAi extends AbstractLLM {
       ChatCompletionResponse::class,
       ChatCompletionRequest::fromGenerateOptions(
         $this->model,
-        array_map(fn (Message $message) => OpenAiMessage::fromMessage($message), $messages),
+        array_map(fn (Message $message) => MistralAiMessage::fromMessage($message), $messages),
         $options
       )
-        ->setResponseFormat([
-          'type' => 'json_schema',
-          'json_schema' => [
-            'name' => 'response',
-            'schema' => $format
-          ]
-        ])
+        ->setResponseFormat(new ResponseFormat(
+          'json_schema',
+          new JsonSchema('response', $format)
+        ))
     );
     $message = $res->choices[0]->message;
     try {
@@ -154,7 +153,7 @@ class OpenAi extends AbstractLLM {
 
       if (($statusCode = $res->getStatusCode()) > 399) {
         throw new LLMException(sprintf(
-          'Unexpected answer from OpenAi backend: [%d] %s',
+          'Unexpected answer from Mistral AI backend: [%d] %s',
           $statusCode,
           $res->getContent(false)
         ));
@@ -164,13 +163,13 @@ class OpenAi extends AbstractLLM {
         return $this->serializer->deserialize($res->getContent(), $responseType, 'json');
       } catch (SerializerExceptionInterface $ex) {
         throw new LLMException(
-          'Error while deserializing OpenAi response: ' . $res->getContent(),
+          'Error while deserializing Mistral AI response: ' . $res->getContent(),
           previous: $ex
         );
       }
     } catch (HttpClientExceptionInterface $ex) {
       throw new LLMException(
-        'Error sending request to OpenAi backend (' . $ex->getMessage() . ')',
+        'Error sending request to Mistral AI backend (' . $ex->getMessage() . ')',
         previous: $ex
       );
     }

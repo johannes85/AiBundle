@@ -29,7 +29,7 @@ class ChatCompletionRequest {
 
   /**
    * @param string $model
-   * @param array<AbstractOpenAiMessage> $messages
+   * @param array<OpenAiMessage> $messages
    */
   public function __construct(
     private string $model,
@@ -40,7 +40,7 @@ class ChatCompletionRequest {
    * Create instance from LLM GenerateOptions
    *
    * @param string $model
-   * @param array<AbstractOpenAiMessage> $messages
+   * @param array<OpenAiMessage> $messages
    * @param ?GenerateOptions $options
    * @return self
    */
@@ -75,14 +75,14 @@ class ChatCompletionRequest {
   }
 
   /**
-   * @return array<AbstractOpenAiMessage>
+   * @return array<OpenAiMessage>
    */
   public function getMessages(): array {
     return $this->messages;
   }
 
   /**
-   * @param array<AbstractOpenAiMessage> $messages
+   * @param array<OpenAiMessage> $messages
    * @return $this
    */
   public function setMessages(array $messages): ChatCompletionRequest {
