@@ -4,6 +4,7 @@ namespace AiBundle\Examples;
 
 use AiBundle\Json\Attributes\ArrayType;
 use AiBundle\LLM\GenerateOptions;
+use AiBundle\LLM\LLMException;
 use AiBundle\Prompting\Message;
 use AiBundle\Prompting\MessageRole;
 use AiBundle\Prompting\Messages;
@@ -38,6 +39,7 @@ class BasicExamplesCommand extends AbstractExampleCommand {
    * @param InputInterface $input
    * @param OutputInterface $output
    * @return int
+   * @throws LLMException
    */
   protected function execute(InputInterface $input, OutputInterface $output): int {
     parent::execute($input, $output);
@@ -53,9 +55,9 @@ class BasicExamplesCommand extends AbstractExampleCommand {
       )->message->content
     );
 
-    $res =  $this->llm->generateData([
+    $res =  $this->llm->generate([
       new Message(MessageRole::HUMAN, 'Tell me about Canada')
-    ], CountryInfo::class);
+    ], responseDataType: CountryInfo::class);
 
     print_r($res->data);
 

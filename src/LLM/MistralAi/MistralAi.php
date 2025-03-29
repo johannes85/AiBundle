@@ -39,13 +39,21 @@ class MistralAi extends AbstractLLM {
 
   /**
    * @inheritDoc
-   *
-   * @param array<Message> $messages
-   * @param GenerateOptions|null $options
-   * @return LLMResponse
-   * @throws LLMException
    */
-  public function generate(array $messages, ?GenerateOptions $options = null): LLMResponse {
+  public function generate(
+    array $messages,
+    ?GenerateOptions $options = null,
+    ?string $responseDataType = null
+  ): LLMResponse {
+    try {
+      $format = $responseDataType ? $this->schemaGenerator->generateForClass($responseDataType) : null;
+    } catch (SchemaGeneratorException $ex) {
+      throw new LLMException(
+        'Error generating schema for datatype: ' . $ex->getMessage(),
+        previous: $ex
+      );
+    }
+
     /** @var ChatCompletionResponse $res */
     $res = $this->doRequest(
       'POST',
@@ -56,9 +64,24 @@ class MistralAi extends AbstractLLM {
         array_map(fn (Message $message) => MistralAiMessage::fromMessage($message), $messages),
         $options
       )
+        ->setResponseFormat($format !== null ? new ResponseFormat(
+          'json_schema',
+          new JsonSchema('response', $format)
+        ) : null)
     );
+
+    $message = $res->choices[0]->message;
+    try {
+      $dataObject = $format !== null
+        ? $this->serializer->deserialize($message->content, $responseDataType, 'json')
+        : null;
+    } catch (SerializerExceptionInterface) {
+      $dataObject = null;
+    }
+
     return new LLMResponse(
-      new Message(MessageRole::AI, $res->choices[0]->message->content)
+      new Message(MessageRole::AI, $message->content),
+      $dataObject
     );
   }
 

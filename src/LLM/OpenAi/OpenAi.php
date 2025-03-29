@@ -10,7 +10,9 @@ use AiBundle\LLM\LLMDataResponse;
 use AiBundle\LLM\LLMResponse;
 use AiBundle\LLM\OpenAi\Dto\ChatCompletionRequest;
 use AiBundle\LLM\OpenAi\Dto\ChatCompletionResponse;
+use AiBundle\LLM\OpenAi\Dto\JsonSchema;
 use AiBundle\LLM\OpenAi\Dto\OpenAiMessage;
+use AiBundle\LLM\OpenAi\Dto\ResponseFormat;
 use AiBundle\Prompting\Message;
 use AiBundle\Prompting\MessageRole;
 use SensitiveParameter;
@@ -37,41 +39,14 @@ class OpenAi extends AbstractLLM {
 
   /**
    * @inheritDoc
-   *
-   * @param array<Message> $messages
-   * @param GenerateOptions|null $options
-   * @return LLMResponse
-   * @throws LLMException
    */
-  public function generate(array $messages, ?GenerateOptions $options = null): LLMResponse {
-    /** @var ChatCompletionResponse $res */
-    $res = $this->doRequest(
-      'POST',
-      '/chat/completions',
-      ChatCompletionResponse::class,
-      ChatCompletionRequest::fromGenerateOptions(
-        $this->model,
-        array_map(fn (Message $message) => OpenAiMessage::fromMessage($message), $messages),
-        $options
-      )
-    );
-    return new LLMResponse(
-      new Message(MessageRole::AI, $res->choices[0]->message->content)
-    );
-  }
-
-  /**
-   * @inheritDoc
-   *
-   * @param array<Message> $messages
-   * @param string $datatype
-   * @param GenerateOptions|null $options
-   * @return LLMDataResponse
-   * @throws LLMException
-   */
-  public function generateData(array $messages, string $datatype, ?GenerateOptions $options = null): LLMDataResponse {
+  public function generate(
+    array $messages,
+    ?GenerateOptions $options = null,
+    ?string $responseDataType = null
+  ): LLMResponse {
     try {
-      $format = $this->schemaGenerator->generateForClass($datatype);
+      $format = $responseDataType ? $this->schemaGenerator->generateForClass($responseDataType) : null;
     } catch (SchemaGeneratorException $ex) {
       throw new LLMException(
         'Error generating schema for datatype: ' . $ex->getMessage(),
@@ -89,23 +64,24 @@ class OpenAi extends AbstractLLM {
         array_map(fn (Message $message) => OpenAiMessage::fromMessage($message), $messages),
         $options
       )
-        ->setResponseFormat([
-          'type' => 'json_schema',
-          'json_schema' => [
-            'name' => 'response',
-            'schema' => $format
-          ]
-        ])
+        ->setResponseFormat($format !== null ? new ResponseFormat(
+          'json_schema',
+          new JsonSchema('response', $format)
+        ) : null)
     );
+
     $message = $res->choices[0]->message;
     try {
-      $object = $this->serializer->deserialize($message->content, $datatype, 'json');
-    } catch (SerializerExceptionInterface $ex) {
-      $object = null;
+      $dataObject = $format !== null
+        ? $this->serializer->deserialize($message->content, $responseDataType, 'json')
+        : null;
+    } catch (SerializerExceptionInterface) {
+      $dataObject = null;
     }
-    return new LLMDataResponse(
+
+    return new LLMResponse(
       new Message(MessageRole::AI, $message->content),
-      $object
+      $dataObject
     );
   }
 

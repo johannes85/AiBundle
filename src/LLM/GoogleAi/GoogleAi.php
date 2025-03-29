@@ -47,34 +47,14 @@ class GoogleAi extends AbstractLLM {
 
   /**
    * @inheritDoc
-   *
-   * @param array<Message> $messages
-   * @param GenerateOptions|null $options
-   * @return LLMResponse
-   * @throws LLMException
    */
-  public function generate(array $messages, ?GenerateOptions $options = null): LLMResponse {
-    $res = $this->abstractGenerate(
-      $messages,
-      $options ? GenerationConfig::fromGenerateOptions($options) : null
-    );
-    return new LLMResponse(
-      new Message(MessageRole::AI, $res->candidates[0]->content->parts[0]->getText())
-    );
-  }
-
-  /**
-   * @inheritDoc
-   *
-   * @param array<Message> $messages
-   * @param string $datatype
-   * @param GenerateOptions|null $options
-   * @return LLMDataResponse
-   * @throws LLMException
-   */
-  public function generateData(array $messages, string $datatype, ?GenerateOptions $options = null): LLMDataResponse {
+  public function generate(
+    array $messages,
+    ?GenerateOptions $options = null,
+    ?string $responseDataType = null
+  ): LLMResponse {
     try {
-      $format = $this->schemaGenerator->generateForClass($datatype);
+      $format = $responseDataType ? $this->schemaGenerator->generateForClass($responseDataType) : null;
     } catch (SchemaGeneratorException $ex) {
       throw new LLMException(
         'Error generating schema for datatype: ' . $ex->getMessage(),
@@ -82,36 +62,6 @@ class GoogleAi extends AbstractLLM {
       );
     }
 
-    $res = $this->abstractGenerate(
-      $messages,
-      GenerationConfig::fromGenerateOptions($options)
-        ->setResponseMimeType('application/json')
-        ->setResponseSchema($format)
-    );
-    $responseText = $res->candidates[0]->content->parts[0]->getText();
-    try {
-      $object = $this->serializer->deserialize($responseText, $datatype, 'json');
-    } catch (SerializerExceptionInterface $ex) {
-      $object = null;
-    }
-    return new LLMDataResponse(
-      new Message(MessageRole::AI, $responseText),
-      $object
-    );
-  }
-
-  /**
-   * Generates content
-   *
-   * @param array<Message> $messages
-   * @param ?GenerationConfig $generationConfig
-   * @return GoogleAiResponse
-   * @throws LLMException
-   */
-  private function abstractGenerate(
-    array $messages,
-    ?GenerationConfig $generationConfig = null
-  ): GoogleAiResponse {
     $systemInstruction = null;
     if (!empty($messages) && $messages[0]->role === MessageRole::SYSTEM) {
       $systemInstruction = new Content([(new Part())->setText($messages[0]->content)]);
@@ -139,7 +89,17 @@ class GoogleAi extends AbstractLLM {
       );
     }
 
-    return $this->doRequest(
+    $generationConfig = null;
+    if ($options !== null || $format !== null) {
+      $generationConfig = GenerationConfig::fromGenerateOptions($options);
+      if ($format !== null) {
+        $generationConfig
+          ->setResponseMimeType('application/json')
+          ->setResponseSchema($format);
+      }
+    }
+
+    $res = $this->doRequest(
       'POST',
       'generateContent',
       GoogleAiResponse::class,
@@ -148,6 +108,20 @@ class GoogleAi extends AbstractLLM {
         $systemInstruction,
         $generationConfig
       )
+    );
+
+    $responseText = $res->candidates[0]->content->parts[0]->getText();
+    try {
+      $dataObject = $format !== null
+        ? $this->serializer->deserialize($responseText, $responseDataType, 'json')
+        : null;
+    } catch (SerializerExceptionInterface) {
+      $dataObject = null;
+    }
+
+    return new LLMDataResponse(
+      new Message(MessageRole::AI, $responseText),
+      $dataObject
     );
   }
 

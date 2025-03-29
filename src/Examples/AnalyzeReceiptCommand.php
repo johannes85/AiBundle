@@ -30,11 +30,12 @@ class AnalyzeReceiptCommand extends AbstractExampleCommand {
    * @param InputInterface $input
    * @param OutputInterface $output
    * @return int
+   * @throws LLMException
    */
   protected function execute(InputInterface $input, OutputInterface $output): int {
     parent::execute($input, $output);
 
-    $ret = $this->llm->generateData([
+    $ret = $this->llm->generate([
       new Message(
         MessageRole::SYSTEM,
         <<<PROMPT
@@ -47,9 +48,9 @@ class AnalyzeReceiptCommand extends AbstractExampleCommand {
         <<<PROMPT
         Please extract the required information from the receipt image.
         PROMPT,
-        files: [File::fromPath(FileType::IMAGE, 'image/jpg', __DIR__.'/Resources/receipt.jpg')]
+        files: [File::fromPath(FileType::IMAGE, 'image/jpeg', __DIR__.'/Resources/receipt.jpg')]
       )
-    ], Receipt::class);
+    ], responseDataType: Receipt::class);
 
     $receipt = $ret->data;
     $output->writeln('Total ammount: '.$receipt->totalAmmount.' '.$receipt->currency);

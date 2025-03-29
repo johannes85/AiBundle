@@ -8,9 +8,9 @@ class LLMDataResponse extends LLMResponse {
 
   public function __construct(
     Message $message,
-    public readonly ?object $data
+    ?object $data
   ) {
-    parent::__construct($message);
+    parent::__construct($message, $data);
   }
 
 }

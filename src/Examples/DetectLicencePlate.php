@@ -2,6 +2,7 @@
 
 namespace AiBundle\Examples;
 
+use AiBundle\LLM\LLMException;
 use AiBundle\Prompting\File;
 use AiBundle\Prompting\FileType;
 use AiBundle\Prompting\Message;
@@ -27,11 +28,12 @@ class DetectLicencePlate extends AbstractExampleCommand {
    * @param InputInterface $input
    * @param OutputInterface $output
    * @return int
+   * @throws LLMException
    */
   protected function execute(InputInterface $input, OutputInterface $output): int {
     parent::execute($input, $output);
 
-    $ret = $this->llm->generateData([
+    $ret = $this->llm->generate([
       new Message(
         MessageRole::HUMAN,
         <<<PROMPT
@@ -39,7 +41,7 @@ class DetectLicencePlate extends AbstractExampleCommand {
         PROMPT,
         files: [File::fromPath(FileType::IMAGE, 'image/png', __DIR__.'/Resources/car.png')]
       )
-    ], Car::class);
+    ], responseDataType: Car::class);
 
     $output->writeln(json_encode($ret->data));
 

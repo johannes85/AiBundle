@@ -11,20 +11,14 @@ abstract class AbstractLLM {
    *
    * @param array<Message> $messages
    * @param GenerateOptions|null $options
+   * @param string|null $responseDataType
    * @return LLMResponse
+   * @throws LLMException
    */
-  public abstract function generate(array $messages, ?GenerateOptions $options = null): LLMResponse;
-
-  /**
-   * Generates completion with structured data response
-   *
-   * @param array<Message> $messages
-   * @param string $datatype
-   * @param GenerateOptions|null $options
-   * @return LLMDataResponse
-   */
-  public abstract function generateData(
-    array $messages, string $datatype, ?GenerateOptions $options = null
-  ): LLMDataResponse;
+  public abstract function generate(
+    array $messages,
+    ?GenerateOptions $options = null,
+    ?string $responseDataType = null
+  ): LLMResponse;
 
 }

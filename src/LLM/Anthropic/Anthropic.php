@@ -53,50 +53,14 @@ class Anthropic extends AbstractLLM {
 
   /**
    * @inheritDoc
-   *
-   * @param array<Message> $messages
-   * @param GenerateOptions|null $options
-   * @return LLMResponse
-   * @throws LLMException
    */
-  public function generate(array $messages, ?GenerateOptions $options = null): LLMResponse {
-    $systemInstruction = null;
-    if (!empty($messages) && $messages[0]->role === MessageRole::SYSTEM) {
-      $systemInstruction = $messages[0]->content;
-      array_shift($messages);
-    }
-    $aMessages = array_map(fn (Message $message) => AnthropicMessage::fromMessage($message), $messages);
-
-    /** @var MessagesResponse $res */
-    $res = $this->doRequest(
-      'POST',
-      '/messages',
-      MessagesResponse::class,
-      MessagesRequest::fromGenerateOptions(
-        $this->model,
-        $aMessages,
-        $this->getModelDefaultMaxTokens($this->model),
-        $options
-      )
-        ->setSystem($systemInstruction)
-    );
-    return new LLMResponse(
-      new Message(MessageRole::AI, $res->content[0]->getText())
-    );
-  }
-
-  /**
-   * @inheritDoc
-   *
-   * @param array<Message> $messages
-   * @param string $datatype
-   * @param GenerateOptions|null $options
-   * @return LLMDataResponse
-   * @throws LLMException
-   */
-  public function generateData(array $messages, string $datatype, ?GenerateOptions $options = null): LLMDataResponse {
+  public function generate(
+    array $messages,
+    ?GenerateOptions $options = null,
+    ?string $responseDataType = null
+  ): LLMResponse {
     try {
-      $format = $this->schemaGenerator->generateForClass($datatype);
+      $format = $responseDataType ? $this->schemaGenerator->generateForClass($responseDataType) : null;
     } catch (SchemaGeneratorException $ex) {
       throw new LLMException(
         'Error generating schema for datatype: ' . $ex->getMessage(),
@@ -111,18 +75,15 @@ class Anthropic extends AbstractLLM {
     }
     $aMessages = array_map(fn (Message $message) => AnthropicMessage::fromMessage($message), $messages);
 
-    /** @var MessagesResponse $res */
-    $res = $this->doRequest(
-      'POST',
-      '/messages',
-      MessagesResponse::class,
-      MessagesRequest::fromGenerateOptions(
-        $this->model,
-        $aMessages,
-        $this->getModelDefaultMaxTokens($this->model),
-        $options
-      )
-        ->setSystem($systemInstruction)
+    $req = MessagesRequest::fromGenerateOptions(
+      $this->model,
+      $aMessages,
+      $this->getModelDefaultMaxTokens($this->model),
+      $options
+    )
+      ->setSystem($systemInstruction);
+    if ($format) {
+      $req
         ->setTools([
           new Tool(
             'return-json-data',
@@ -130,18 +91,28 @@ class Anthropic extends AbstractLLM {
             $format
           )
         ])
-        ->setToolChoice(new ToolChoice(ToolChoiceType::TOOL, name: 'return-json-data'))
+        ->setToolChoice(new ToolChoice(ToolChoiceType::TOOL, name: 'return-json-data'));
+    }
+
+    /** @var MessagesResponse $res */
+    $res = $this->doRequest(
+      'POST',
+      '/messages',
+      MessagesResponse::class,
+      $req
     );
 
     $content = $res->content[0];
     try {
-      $object = $this->serializer->denormalize($content->getInput(), $datatype);
-    } catch (SerializerExceptionInterface $ex) {
-      $object = null;
+      $dataObject = $format !== null
+        ? $this->serializer->denormalize($content->getInput(), $responseDataType)
+        : null;
+    } catch (SerializerExceptionInterface) {
+      $dataObject = null;
     }
     return new LLMDataResponse(
       new Message(MessageRole::AI, $content->getText() ?? ''),
-      $object
+      $dataObject
     );
   }
 
@@ -206,7 +177,7 @@ class Anthropic extends AbstractLLM {
 
       if (($statusCode = $res->getStatusCode()) > 399) {
         throw new LLMException(sprintf(
-          'Unexpected answer from OpenAi backend: [%d] %s',
+          'Unexpected answer from Anthropic backend: [%d] %s',
           $statusCode,
           $res->getContent(false)
         ));
@@ -216,13 +187,13 @@ class Anthropic extends AbstractLLM {
         return $this->serializer->deserialize($res->getContent(), $responseType, 'json');
       } catch (SerializerExceptionInterface $ex) {
         throw new LLMException(
-          'Error while deserializing OpenAi response: ' . $res->getContent(),
+          'Error while deserializing Anthropic response: ' . $res->getContent(),
           previous: $ex
         );
       }
     } catch (HttpClientExceptionInterface $ex) {
       throw new LLMException(
-        'Error sending request to OpenAi backend (' . $ex->getMessage() . ')',
+        'Error sending request to Anthropic backend (' . $ex->getMessage() . ')',
         previous: $ex
       );
     }

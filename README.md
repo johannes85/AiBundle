@@ -65,9 +65,9 @@ class CountryInfo {
   #[ArrayType(itemType: 'string')] public array $languages; 
 }
 
-$info = $llm->generateData([
+$info = $llm->generate([
   new Message(MessageRole::HUMAN, 'Tell me about Canada')
-], CountryInfo::class);
+], responseDataType: CountryInfo::class);
 
 /* Result:
 CountryInfo#248 (3) {

@@ -2,6 +2,7 @@
 
 namespace AiBundle\Examples;
 
+use AiBundle\LLM\LLMException;
 use AiBundle\Prompting\File;
 use AiBundle\Prompting\FileType;
 use AiBundle\Prompting\Message;
@@ -20,6 +21,7 @@ class DetectCars extends AbstractExampleCommand {
    * @param InputInterface $input
    * @param OutputInterface $output
    * @return int
+   * @throws LLMException
    */
   protected function execute(InputInterface $input, OutputInterface $output): int {
     parent::execute($input, $output);

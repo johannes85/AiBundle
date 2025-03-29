@@ -35,40 +35,14 @@ class Ollama extends AbstractLLM {
 
   /**
    * @inheritDoc
-   *
-   * @param array<Message> $messages
-   * @return LLMResponse
-   * @throws LLMException
    */
-  public function generate(array $messages, ?GenerateOptions $options = null): LLMResponse {
-    /** @var OllamaChatResponse $res */
-    $res = $this->doRequest(
-      'POST',
-      '/api/chat',
-      OllamaChatResponse::class,
-      (new GenerateChatParameters(
-        $this->model,
-        array_map(fn (Message $message) => OllamaMessage::fromMessage($message), $messages)
-      ))
-        ->setStream(false)
-        ->setOptions($options !== null ? OllamaOptions::fromGenerateOptions($options) : null)
-    );
-    return new LLMResponse(
-      $res->message->toMessage()
-    );
-  }
-
-  /**
-   * @inheritDoc
-   *
-   * @param array<Message> $messages
-   * @param string $datatype
-   * @return LLMDataResponse
-   * @throws LLMException
-   */
-  public function generateData(array $messages, string $datatype, ?GenerateOptions $options = null): LLMDataResponse {
+  public function generate(
+    array $messages,
+    ?GenerateOptions $options = null,
+    ?string $responseDataType = null
+  ): LLMResponse {
     try {
-      $format = $this->schemaGenerator->generateForClass($datatype);
+      $format = $responseDataType ? $this->schemaGenerator->generateForClass($responseDataType) : null;
     } catch (SchemaGeneratorException $ex) {
       throw new LLMException(
         'Error generating schema for datatype: ' . $ex->getMessage(),
@@ -90,14 +64,17 @@ class Ollama extends AbstractLLM {
         ->setOptions($options !== null ? OllamaOptions::fromGenerateOptions($options) : null)
     );
     $message = $res->message;
+
     try {
-      $object = $this->serializer->deserialize($message->content, $datatype, 'json');
-    } catch (SerializerExceptionInterface $ex) {
-      $object = null;
+      $dataObject = $format !== null
+        ? $this->serializer->deserialize($message->content, $responseDataType, 'json')
+        : null;
+    } catch (SerializerExceptionInterface) {
+      $dataObject = null;
     }
-    return new LLMDataResponse(
-      $message->toMessage(),
-      $object
+    return new LLMResponse(
+      $res->message->toMessage(),
+      $dataObject
     );
   }
 

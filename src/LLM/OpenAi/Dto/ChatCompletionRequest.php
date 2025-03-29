@@ -24,8 +24,8 @@ class ChatCompletionRequest {
   #[SerializedName('top_p')] private ?float $topP = null;
   private ?string $user = null;
 
-  /** @var array<mixed>|null */
-  #[SerializedName('response_format')] private ?array $responseFormat = null;
+  /** @var ?ResponseFormat */
+  #[SerializedName('response_format')] private ?ResponseFormat $responseFormat = null;
 
   /**
    * @param string $model
@@ -214,19 +214,12 @@ class ChatCompletionRequest {
     return $this;
   }
 
-  /**
-   * @return array<mixed>|null
-   */
-  public function getResponseFormat(): ?array {
+  public function getResponseFormat(): ?ResponseFormat {
     return $this->responseFormat;
   }
 
-  /**
-   * @param array<mixed>|null $response_format
-   * @return static
-   */
-  public function setResponseFormat(?array $response_format): static {
-    $this->responseFormat = $response_format;
+  public function setResponseFormat(?ResponseFormat $responseFormat): ChatCompletionRequest {
+    $this->responseFormat = $responseFormat;
     return $this;
   }
 

@@ -2,6 +2,7 @@
 
 namespace AiBundle\Examples;
 
+use AiBundle\LLM\LLMException;
 use AiBundle\Prompting\Message;
 use AiBundle\Prompting\MessageRole;
 use AiBundle\Prompting\MessageStore\MessageStoreDebugTap;
@@ -49,6 +50,7 @@ class PersistentChatCommand extends AbstractExampleCommand {
    * @return int
    * @throws MissingInputException
    * @throws RuntimeException
+   * @throws LLMException
    */
   protected function execute(InputInterface $input, OutputInterface $output): int {
     parent::execute($input, $output);
