@@ -39,10 +39,10 @@ class GoogleAi extends AbstractLLM {
   public function __construct(
     #[SensitiveParameter] private readonly string $apiKey,
     private readonly string $model,
+    private readonly float $timeout,
     #[Autowire('@ai_bundle.rest.http_client')] private readonly HttpClientInterface $httpClient,
     #[Autowire('@ai_bundle.rest.serializer')] private readonly Serializer $serializer,
-    private readonly SchemaGenerator $schemaGenerator,
-    private readonly float $timeout = 300
+    private readonly SchemaGenerator $schemaGenerator
   ) {}
 
   /**

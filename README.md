@@ -97,7 +97,7 @@ ai:
   llms:
     open_ai:
       default:
-        apikey: '...%'
+        apikey: '...'
         model: 'gpt-4o-mini'
       o3mini:
         apikey: '...'

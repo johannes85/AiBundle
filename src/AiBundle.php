@@ -7,10 +7,12 @@ use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Definition;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
 use Symfony\Component\HttpKernel\Bundle\AbstractBundle;
+use InvalidArgumentException;
 
 class AiBundle extends AbstractBundle {
 
   private const OLLAMA_DEFAULT_ENDPOINT = 'http://127.0.0.1:11434';
+  private const OPENAI_DEFAULT_ENDPOINT = 'https://api.openai.com/v1';
   private const DEFAULT_TIMEOUT = 300;
   private const DEFAULT_LLM_CONFIG_NAME = 'default';
   private const LLM_DEFINITION_PREFIX = 'ai_bundle.llm.';
@@ -24,6 +26,7 @@ class AiBundle extends AbstractBundle {
   ];
 
   public function configure(DefinitionConfigurator $definition): void {
+    // @phpstan-ignore method.notFound
     $definition->rootNode()
       ->children()
         ->arrayNode('llms')->canBeUnset()
@@ -65,6 +68,7 @@ class AiBundle extends AbstractBundle {
                   ->stringNode('apikey')->isRequired()->end()
                   ->stringNode('model')->isRequired()->end()
                   ->floatNode('timeout')->defaultValue(self::DEFAULT_TIMEOUT)->end()
+                  ->stringNode('endpoint')->defaultValue(self::OPENAI_DEFAULT_ENDPOINT)->end()
                 ->end()
               ->end()
             ->end()
@@ -72,7 +76,7 @@ class AiBundle extends AbstractBundle {
               ->useAttributeAsKey('name')
               ->arrayPrototype()
                 ->children()
-                  ->stringNode('endpoint')->defaultValue('http://127.0.0.1:11434')->end()
+                  ->stringNode('endpoint')->defaultValue(self::OLLAMA_DEFAULT_ENDPOINT)->end()
                   ->stringNode('model')->isRequired()->end()
                   ->floatNode('timeout')->defaultValue(self::DEFAULT_TIMEOUT)->end()
                 ->end()
@@ -103,17 +107,23 @@ class AiBundle extends AbstractBundle {
               match ($llmType) {
                 'anthropic',
                 'google_ai',
-                'mistral_ai',
-                'open_ai' => [
+                'mistral_ai' => [
                   '$apiKey'   => $llmParameters['apikey'],
                   '$model'    => $llmParameters['model'],
                   '$timeout'  => $llmParameters['timeout']
+                ],
+                'open_ais' => [
+                  '$apiKey'   => $llmParameters['apikey'],
+                  '$model'    => $llmParameters['model'],
+                  '$timeout'  => $llmParameters['timeout'],
+                  '$endpoint' => $llmParameters['endpoint']
                 ],
                 'ollama' => [
                   '$endpoint' => $llmParameters['endpoint'],
                   '$model'    => $llmParameters['model'],
                   '$timeout'  => $llmParameters['timeout']
-                ]
+                ],
+                default => throw new InvalidArgumentException('No definition arguments defined for llm '.$llmType)
               }
             ))->setAutowired(true)
           );

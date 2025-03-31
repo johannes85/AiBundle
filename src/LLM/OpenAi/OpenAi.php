@@ -26,15 +26,14 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 class OpenAi extends AbstractLLM {
 
-  private const ENDPOINT = 'https://api.openai.com/v1';
-
   public function __construct(
     #[SensitiveParameter] private readonly string $apiKey,
     private readonly string $model,
+    private readonly string $endpoint,
+    private readonly float $timeout,
     #[Autowire('@ai_bundle.rest.http_client')] private readonly HttpClientInterface $httpClient,
     #[Autowire('@ai_bundle.rest.serializer')] private readonly Serializer $serializer,
     private readonly SchemaGenerator $schemaGenerator,
-    private readonly float $timeout = 300
   ) {}
 
   /**
@@ -124,7 +123,7 @@ class OpenAi extends AbstractLLM {
 
       $res = $this->httpClient->request(
         $method,
-        self::ENDPOINT . $resource,
+        $this->endpoint . $resource,
         $options
       );
 
