@@ -89,36 +89,43 @@ CountryInfo#248 (3) {
 ## Usage
 
 ### Configure LLM backend instances
-To use a specific backend it has to be configured as a service in your projects service definition and can be injected in your code afterwards.
+To use a specific backend as a service, it has to be configured:
 
 ```yaml
-# services.yaml
-services:
-
-  my.ollama:
-    class: AiBundle\LLM\Ollama\Ollama:
-    arguments:
-      $endpoint: 'http://127.0.0.1:11434'
-      $model: 'gemma2'
-
-  my.openai:
-    class: AiBundle\LLM\OpenAi\OpenAi:
-    arguments:
-      $apiKey: '...'
-      $model: 'gpt-4o-mini'
-
-  my.googleai:
-    class: AiBundle\LLM\GoogleAi\GoogleAi:
-    arguments:
-      $apiKey: '...'
-      $model: 'gemini-2.0-flash'
-
-  my.anthrophic:
-    class: AiBundle\LLM\Anthropic\Anthropic:
-    arguments:
-      $apiKey: '...'
-      $model: 'claude-3-5-sonnet-20241022'
+# ai.yaml
+ai:
+  llms:
+    open_ai:
+      default:
+        apikey: '...%'
+        model: 'gpt-4o-mini'
+      o3mini:
+        apikey: '...'
+        model: 'o3-mini'
+    google_ai:
+      default:
+        apikey: '...'
+        model: 'gemini-2.0-flash'
+    mistral_ai:
+      default:
+        apikey: '...'
+        model: 'mistral-small-latest'
+    anthropic:
+      default:
+        apikey: '...'
+        model: 'claude-3-5-sonnet-20241022'
+    ollama:
+      default:
+        model: 'gemma3:latest'
 ```
+
+In this example, the following services will be registered:
+- ai_bundle.llm.open_ai
+- ai_bundle.llm.open_ai.o3mini
+- ai_bundle.llm.google_ai
+- ai_bundle.llm.mistral_ai
+- ai_bundle.llm.anthropic
+- ai_bundle.llm.ollama
 
 ### Execute standalone examples
 This bundle provides standalone examples of the features provided.
