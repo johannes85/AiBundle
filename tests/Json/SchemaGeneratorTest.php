@@ -2,63 +2,48 @@
 
 namespace AiBundle\Tests\Json;
 
+use AiBundle\Json\Attributes\ArrayType;
 use AiBundle\Json\SchemaGenerator;
 use AiBundle\Tests\Mock\TestClass1;
 use PHPUnit\Framework\TestCase;
 
 class SchemaGeneratorTest extends TestCase {
 
-  public function test_generateForClass() {
+  public function test_generateForClosureParameters() {
     $generator = new SchemaGenerator();
-    $schema = $generator->generateForClass(TestClass1::class);
+    $schema = $generator->generateForClosureParameters(function (
+      TestClass1 $param1,
+      int $param2,
+      #[ArrayType('number')] ?array $param3 = null
+    ) {});
     $this->assertEquals(
       [
         'type' => 'object',
         'properties' => [
-          'pString' => ['type' => 'string'],
-          'pNullableString' => ['type' => 'string'],
-          'pNullableString2' => ['type' => 'string'],
-          'pNUll' => ['type' => 'null'],
-          'pInt' => ['type' => 'integer'],
-          'pFloat' => ['type' => 'number'],
-          'pBool' => ['type' => 'boolean'],
-          'pArray' => ['type' => 'array'],
-          'pClass' => [
-            'type' => 'object',
-            'properties' => [
-              'member1' => [
-                'type' => 'string',
-              ],
-              'member2' => [
-                'type' => 'string',
-              ],
-            ],
-            'required' => ['member2'],
-          ],
-          'pArrayItemTypes1' => [
-            'type' => 'array',
-            'items' => ['type' => 'string'],
-          ],
-          'string1' => [
-            'type' => 'string',
-          ],
-          'arrayItemTypes2' => [
-            'type' => 'array',
-            'items' => ['type' => 'number'],
-          ]
+          'param1' => TestClass1::SCHEMA,
+          'param2' => ['type' => 'integer'],
+          'param3' => ['type' => 'array', 'items' => ['type' => 'number']],
         ],
-        'required' => [
-          'pString',
-          'pInt',
-          'pFloat',
-          'pBool',
-          'pArray',
-          'pClass',
-          'pArrayItemTypes1',
-          'string1',
-          'arrayItemTypes2'
-        ],
+        'required' => ['param1', 'param2']
       ],
+      $schema
+    );
+  }
+
+  public function test_generateForClass() {
+    $generator = new SchemaGenerator();
+    $schema = $generator->generateForClass(TestClass1::class);
+    $this->assertEquals(
+      TestClass1::SCHEMA,
+      $schema
+    );
+  }
+
+  public function test_generateForArrayOfClass() {
+    $generator = new SchemaGenerator();
+    $schema = $generator->generateForClass(TestClass1::class.'[]');
+    $this->assertEquals(
+      ['type' => 'array', 'items' => TestClass1::SCHEMA],
       $schema
     );
   }

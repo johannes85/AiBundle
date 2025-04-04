@@ -6,13 +6,13 @@ This PHP Symfony bundle allows to call LLM backends in a generic and simple way.
 
 The following backends are supported:
 
-| Backend    | Text generation | Image processing  | Info                       
-|------------|-----------------|-------------------|----------------------------|
-| OpenAI     | ✅               | ✅                 | https://openai.com/        |
-| Ollama     | ✅               | ✅                 | https://ollama.ai/         |
-| GoogleAI   | ✅               | ✅                 | https://ai.google.dev      |
-| Anthropic  | ✅               | ✅                 | https://www.anthropic.com/ |
-| Mistral AI | ✅               | ✅                 | https://mistral.ai/        |
+| Backend    | Text generation | Image processing | Tool calling | Info                       
+|------------|---|---|---|----------------------------|
+| OpenAI     | ✅ | ✅ | ✅ | https://openai.com/        |
+| Ollama     | ✅ | ✅ | ✅ | https://ollama.ai/         |
+| GoogleAI   | ✅ | ✅ | ❌ | https://ai.google.dev      |
+| Anthropic  | ✅ | ✅ | ❌ | https://www.anthropic.com/ |
+| Mistral AI | ✅ | ✅ | ✅ | https://mistral.ai/        |
 
 ## Requirements
 - PHP >=8.2

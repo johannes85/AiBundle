@@ -18,7 +18,7 @@ class ChatCompletionRequest {
   #[SerializedName('random_seed')] private ?int $randomSeed = null;
   #[SerializedName('response_format')] private ?ResponseFormat $responseFormat = null;
 
-  /** @var array<mixed>|null  */
+  /** @var array<MistralTool>|null  */
   private ?array $tools = null;
   #[SerializedName('presence_penalty')] private ?float $presencePenalty = null;
 

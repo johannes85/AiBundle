@@ -4,13 +4,20 @@ namespace AiBundle\LLM\Ollama\Dto;
 
 use AiBundle\LLM\Ollama\Dto\AbstractGenerateParameters;
 use AiBundle\LLM\Ollama\Dto\OllamaOptions;
+use AiBundle\LLM\Ollama\Ollama;
+use LLM\Ollama\Dto\OllamaFunctionTool;
 
-class GenerateChatParameters extends AbstractGenerateParameters {
+class GenerateChatParameters {
 
   private bool $stream = false;
 
   /** @var array<mixed>|null */
   private ?array $format = null;
+
+  /**
+   * @var array<OllamaTool>|null
+   */
+  private ?array $tools = null;
 
   private ?OllamaOptions $options = null;
 
@@ -70,6 +77,22 @@ class GenerateChatParameters extends AbstractGenerateParameters {
    */
   public function setFormat(?array $format): static {
     $this->format = $format;
+    return $this;
+  }
+
+  /**
+   * @return array<OllamaTool>|null
+   */
+  public function getTools(): ?array {
+    return $this->tools;
+  }
+
+  /**
+   * @param array<OllamaTool>|null $tools
+   * @return $this
+   */
+  public function setTools(?array $tools): GenerateChatParameters {
+    $this->tools = $tools;
     return $this;
   }
 

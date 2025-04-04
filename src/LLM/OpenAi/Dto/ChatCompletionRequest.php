@@ -20,6 +20,10 @@ class ChatCompletionRequest {
   private ?bool $store = null;
   private ?bool $stream = null;
   private ?float $temperature = null;
+
+  /** @var array<OpenAiTool>|null */
+  private ?array $tools = null;
+
   #[SerializedName('top_logprobs')] private ?string $topLogprobs = null;
   #[SerializedName('top_p')] private ?float $topP = null;
   private ?string $user = null;
@@ -184,6 +188,22 @@ class ChatCompletionRequest {
 
   public function setTemperature(?float $temperature): static {
     $this->temperature = $temperature;
+    return $this;
+  }
+
+  /**
+   * @return array<OpenAiTool>|null
+   */
+  public function getTools(): ?array {
+    return $this->tools;
+  }
+
+  /**
+   * @param array<OpenAiTool>|null $tools
+   * @return $this
+   */
+  public function setTools(?array $tools): ChatCompletionRequest {
+    $this->tools = $tools;
     return $this;
   }
 

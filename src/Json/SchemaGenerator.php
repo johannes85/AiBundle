@@ -3,13 +3,43 @@
 namespace AiBundle\Json;
 
 use AiBundle\Json\Attributes\ArrayType;
+use Closure;
 use ReflectionClass;
 use ReflectionException;
+use ReflectionFunction;
 use ReflectionMethod;
 use ReflectionNamedType;
+use ReflectionParameter;
 use ReflectionProperty;
 
 class SchemaGenerator {
+
+  /**
+   * Generates json schema for parameters of a closure
+   *
+   * @param Closure $closure
+   * @return array<mixed>
+   * @throws ReflectionException
+   * @throws SchemaGeneratorException
+   */
+  public function generateForClosureParameters(Closure $closure): array {
+    $schema = [
+      'type' => 'object',
+      'properties' => [],
+    ];
+    $requiredProperties = [];
+    foreach((new ReflectionFunction($closure))->getParameters() as $parameter) {
+      $res = $this->generateForParameter($parameter);
+      $schema['properties'][$parameter->getName()] = $res['schema'];
+      if ($res['required']) {
+        $requiredProperties[] = $parameter->getName();
+      }
+    }
+    if (!empty($requiredProperties)) {
+      $schema['required'] = $requiredProperties;
+    }
+    return $schema;
+  }
 
   /**
    * Generates json schema for a class
@@ -20,6 +50,9 @@ class SchemaGenerator {
    */
   public function generateForClass(string $className): array {
     try {
+      if ($isArray = str_ends_with($className, '[]')) {
+        $className = substr($className, 0, -2);
+      }
       $reflectionClass = new ReflectionClass($className);
       $schema = [
         'type' => 'object',
@@ -34,7 +67,10 @@ class SchemaGenerator {
         }
       }
       foreach ($reflectionClass->getMethods(ReflectionMethod::IS_PUBLIC) as $method) {
-        if (($res = $this->generateForMethod($method)) === null) {
+        if (!str_starts_with($method->getName(), 'set')) {
+          continue;
+        }
+        if (($res = $this->generateForSetterMethod($method)) === null) {
           continue;
         }
         $schema['properties'][$res['name']] = $res['value'];
@@ -45,7 +81,9 @@ class SchemaGenerator {
       if (!empty($requiredProperties)) {
         $schema['required'] = $requiredProperties;
       }
-      return $schema;
+      return $isArray
+        ? ['type' => 'array', 'items' => $schema]
+        : $schema;
     } catch (ReflectionException $ex) {
       throw new SchemaGeneratorException(
         'Error getting info about class provided: '.$ex->getMessage(),
@@ -88,11 +126,13 @@ class SchemaGenerator {
         $propertyTypeName = $this->propertyTypeForString($propertyType->getName());
         $value['type'] = $propertyTypeName;
         if ($propertyTypeName === 'array') {
-          if (
-            !empty($attribute = $property->getAttributes(ArrayType::class)) &&
-            ($arrayItemType = $attribute[0]->newInstance()->itemType) !== null
-          ) {
-            $value['items'] = ['type' => $arrayItemType];
+          if (!empty($attributes = $property->getAttributes(ArrayType::class))) {
+            $instance = $attributes[0]->newInstance();
+            if ($instance->itemType !== null) {
+              $value['items'] = ['type' => $instance->itemType];
+            } elseif ($instance->itemClass !== null) {
+              $value['items']= $this->generateForClass($instance->itemClass);
+            }
           }
         }
       } else {
@@ -108,39 +148,55 @@ class SchemaGenerator {
   }
 
   /**
-   * Generates schema for a method
+   * Generates schema for a setter method
    *
    * @param ReflectionMethod $method
    * @return array<mixed>|null
+   * @throws SchemaGeneratorException
    */
-  private function generateForMethod(ReflectionMethod $method): ?array {
-    if (!str_starts_with($name = $method->getName(), 'set')) {
+  private function generateForSetterMethod(ReflectionMethod $method): ?array {
+    if (empty($params = $method->getParameters())) {
       return null;
     }
-    $params = $method->getParameters();
-    if (empty($params)) {
-      return null;
-    }
-    $name = lcfirst(substr($name, 3));
-    $parameterType = $params[0]->getType();
-    $value = ['type' => 'mixed'];
+    $parameterSchema = $this->generateForParameter($params[0]);
+    return [
+      'name' => lcfirst(substr($method->getName(), 3)),
+      'value' => $parameterSchema['schema'],
+      'required' => $parameterSchema['required'],
+    ];
+  }
+
+  /**
+   * Generates schema for parameter
+   *
+   * @param ReflectionParameter $parameter
+   * @return array<mixed>
+   * @throws SchemaGeneratorException
+   */
+  private function generateForParameter(ReflectionParameter $parameter): array {
+    $type = $parameter->getType();
+    $schema = ['type' => 'mixed'];
     $required = false;
-    if ($parameterType instanceof ReflectionNamedType) {
-      $parameterTypeName = $this->propertyTypeForString($parameterType->getName());
-      $value['type'] = $parameterTypeName;
-      if ($parameterTypeName === 'array') {
-        if (
-          !empty($attribute = $params[0]->getAttributes(ArrayType::class)) &&
-          ($arrayItemType = $attribute[0]->newInstance()->itemType) !== null
-        ) {
-          $value['items'] = ['type' => $arrayItemType];
+    if ($type instanceof ReflectionNamedType) {
+      if ($type->isBuiltin()) {
+        $schema['type'] = $this->propertyTypeForString($type->getName());
+        if ($schema['type'] === 'array') {
+          if (!empty($attributes = $parameter->getAttributes(ArrayType::class))) {
+            $instance = $attributes[0]->newInstance();
+            if ($instance->itemType !== null) {
+              $schema['items'] = ['type' => $instance->itemType];
+            } elseif ($instance->itemClass !== null) {
+              $schema['items'] = $this->generateForClass($instance->itemClass);
+            }
+          }
         }
+      } else {
+        $schema = $this->generateForClass($type->getName());
       }
-      $required = !$parameterType->allowsNull();
+      $required = !$parameter->isDefaultValueAvailable();
     }
     return [
-      'name' => $name,
-      'value' => $value,
+      'schema' => $schema,
       'required' => $required,
     ];
   }

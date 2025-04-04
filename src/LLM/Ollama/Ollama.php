@@ -6,19 +6,23 @@ use AiBundle\Json\SchemaGenerator;
 use AiBundle\Json\SchemaGeneratorException;
 use AiBundle\LLM\AbstractLLM;
 use AiBundle\LLM\GenerateOptions;
-use AiBundle\LLM\LLMDataResponse;
 use AiBundle\LLM\LLMException;
 use AiBundle\LLM\LLMResponse;
 use AiBundle\LLM\Ollama\Dto\GenerateChatParameters;
-use AiBundle\LLM\Ollama\Dto\OllamaMessage;
 use AiBundle\LLM\Ollama\Dto\OllamaChatResponse;
-use AiBundle\Prompting\Message;
+use AiBundle\LLM\Ollama\Dto\OllamaFunction;
+use AiBundle\LLM\Ollama\Dto\OllamaMessage;
 use AiBundle\LLM\Ollama\Dto\OllamaOptions;
+use AiBundle\LLM\Ollama\Dto\OllamaTool;
+use AiBundle\Prompting\Message;
+use AiBundle\Prompting\Tools\Tool;
+use AiBundle\Prompting\Tools\Toolbox;
+use AiBundle\Prompting\Tools\ToolsHelper;
 use SensitiveParameter;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
+use Symfony\Component\Serializer\Exception\ExceptionInterface as SerializerExceptionInterface;
 use Symfony\Component\Serializer\Normalizer\AbstractObjectNormalizer;
 use Symfony\Component\Serializer\Serializer;
-use Symfony\Component\Serializer\Exception\ExceptionInterface as SerializerExceptionInterface;
 use Symfony\Contracts\HttpClient\Exception\ExceptionInterface as HttpClientExceptionInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
@@ -30,7 +34,8 @@ class Ollama extends AbstractLLM {
     private readonly float $timeout,
     #[Autowire('@ai_bundle.rest.http_client')] private readonly HttpClientInterface $httpClient,
     #[Autowire('@ai_bundle.rest.serializer')] private readonly Serializer $serializer,
-    private readonly SchemaGenerator $schemaGenerator
+    private readonly SchemaGenerator $schemaGenerator,
+    private readonly ToolsHelper $toolsHelper
   ) {}
 
   /**
@@ -39,7 +44,8 @@ class Ollama extends AbstractLLM {
   public function generate(
     array $messages,
     ?GenerateOptions $options = null,
-    ?string $responseDataType = null
+    ?string $responseDataType = null,
+    ?Toolbox $toolbox = null
   ): LLMResponse {
     try {
       $format = $responseDataType ? $this->schemaGenerator->generateForClass($responseDataType) : null;
@@ -50,32 +56,60 @@ class Ollama extends AbstractLLM {
       );
     }
 
-    /** @var OllamaChatResponse $res */
-    $res = $this->doRequest(
-      'POST',
-      '/api/chat',
-      OllamaChatResponse::class,
-      (new GenerateChatParameters(
-        $this->model,
-        array_map(fn (Message $message) => OllamaMessage::fromMessage($message), $messages)
-      ))
-        ->setStream(false)
-        ->setFormat($format)
-        ->setOptions($options !== null ? OllamaOptions::fromGenerateOptions($options) : null)
-    );
-    $message = $res->message;
+    $ollamaMessages = array_map(fn (Message $message) => OllamaMessage::fromMessage($message), $messages);
 
-    try {
-      $dataObject = $format !== null
-        ? $this->serializer->deserialize($message->content, $responseDataType, 'json')
-        : null;
-    } catch (SerializerExceptionInterface) {
-      $dataObject = null;
-    }
-    return new LLMResponse(
-      $res->message->toMessage(),
-      $dataObject
-    );
+    $finalResponse = null;
+    do {
+      /** @var OllamaChatResponse $res */
+      $res = $this->doRequest(
+        'POST',
+        '/api/chat',
+        OllamaChatResponse::class,
+        (new GenerateChatParameters(
+          $this->model,
+          $ollamaMessages,
+        ))
+          ->setStream(false)
+          ->setFormat($format)
+          ->setOptions($options !== null ? OllamaOptions::fromGenerateOptions($options) : null)
+          ->setTools($toolbox !== null
+            ? array_map(fn (Tool $tool) => new OllamaTool(
+              OllamaFunction::fromTool($tool, $this->toolsHelper)
+            ), $toolbox->getTools())
+            : null
+          )
+      );
+
+      $message = $res->message;
+
+      if (!empty($message->toolCalls)) {
+        $ollamaMessages[] = $message;
+        foreach ($message->toolCalls as $toolCall) {
+          $tool = $toolbox->getTool($toolCall->function->name);
+          $res = $this->toolsHelper->callTool($tool, $toolCall->function->arguments);
+
+          $ollamaMessages[] = new OllamaMessage(
+            'tool',
+            $res
+          );
+        }
+      } else {
+        try {
+          $dataObject = $format !== null
+            ? $this->serializer->deserialize($message->content, $responseDataType, 'json')
+            : null;
+        } catch (SerializerExceptionInterface) {
+          $dataObject = null;
+        }
+
+        $finalResponse = new LLMResponse(
+          $res->message->toMessage(),
+          $dataObject
+        );
+      }
+    } while ($finalResponse === null);
+
+    return $finalResponse;
   }
 
   /**

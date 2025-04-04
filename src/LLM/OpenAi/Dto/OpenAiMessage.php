@@ -6,16 +6,23 @@ use AiBundle\Prompting\FileType;
 use AiBundle\Prompting\Message;
 use AiBundle\Prompting\MessageRole;
 use InvalidArgumentException;
+use Symfony\Component\Serializer\Attribute\SerializedName;
 
 class OpenAiMessage {
 
   /**
    * @param string $role
    * @param string|array<ContentPart> $content
+   * @param string|null $name
+   * @param string|null $toolCallId
+   * @param array<ToolCall>|null $toolCalls
    */
   public function __construct(
     public readonly string $role,
-    public readonly string|array $content
+    public readonly string|array|null $content,
+    public readonly ?string $name = null,
+    #[SerializedName('tool_call_id')] public readonly ?string $toolCallId = null,
+    #[SerializedName('tool_calls')] public readonly ?array $toolCalls = null
   ) {}
 
   /**

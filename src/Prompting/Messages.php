@@ -5,7 +5,7 @@ namespace AiBundle\Prompting;
 class Messages implements MessagesInterface {
 
   /** @var array<Message> */
-  private array $messages = [];
+  private readonly array $messages;
 
   public function __construct(Message ...$messages) {
     $this->messages = $messages;
