@@ -11,10 +11,14 @@ use AiBundle\LLM\LLMResponse;
 use AiBundle\LLM\MistralAi\Dto\ChatCompletionRequest;
 use AiBundle\LLM\MistralAi\Dto\ChatCompletionResponse;
 use AiBundle\LLM\MistralAi\Dto\JsonSchema;
+use AiBundle\LLM\MistralAi\Dto\MistralFunction;
+use AiBundle\LLM\MistralAi\Dto\MistralTool;
 use AiBundle\LLM\MistralAi\Dto\ResponseFormat;
 use AiBundle\LLM\MistralAi\Dto\MistralAiMessage;
 use AiBundle\Prompting\Message;
 use AiBundle\Prompting\MessageRole;
+use AiBundle\Prompting\Tools\Tool;
+use AiBundle\Prompting\Tools\Tools;
 use SensitiveParameter;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\Serializer\Exception\ExceptionInterface as SerializerExceptionInterface;
@@ -34,7 +38,8 @@ class MistralAi extends AbstractLLM {
     private readonly float $timeout,
     #[Autowire('@ai_bundle.rest.http_client')] private readonly HttpClientInterface $httpClient,
     #[Autowire('@ai_bundle.rest.serializer')] private readonly Serializer $serializer,
-    private readonly SchemaGenerator $schemaGenerator
+    private readonly SchemaGenerator $schemaGenerator,
+    private readonly Tools $tools
   ) {}
 
   /**
@@ -43,7 +48,8 @@ class MistralAi extends AbstractLLM {
   public function generate(
     array $messages,
     ?GenerateOptions $options = null,
-    ?string $responseDataType = null
+    ?string $responseDataType = null,
+    ?array $tools = null
   ): LLMResponse {
     try {
       $format = $responseDataType ? $this->schemaGenerator->generateForClass($responseDataType) : null;
@@ -54,6 +60,10 @@ class MistralAi extends AbstractLLM {
       );
     }
 
+    $mistralAiMessages = array_map(fn (Message $message) => MistralAiMessage::fromMessage($message), $messages);
+
+    next:
+
     /** @var ChatCompletionResponse $res */
     $res = $this->doRequest(
       'POST',
@@ -61,16 +71,36 @@ class MistralAi extends AbstractLLM {
       ChatCompletionResponse::class,
       ChatCompletionRequest::fromGenerateOptions(
         $this->model,
-        array_map(fn (Message $message) => MistralAiMessage::fromMessage($message), $messages),
+        $mistralAiMessages,
         $options
       )
         ->setResponseFormat($format !== null ? new ResponseFormat(
           'json_schema',
           new JsonSchema('response', $format)
         ) : null)
+        ->setTools($tools !== null
+          ? array_map(fn (Tool $tool) => new MistralTool(MistralFunction::fromTool($tool, $this->tools)), $tools)
+          : null
+        )
     );
 
     $message = $res->choices[0]->message;
+
+    if (!empty($message->toolCalls)) {
+      foreach ($message->toolCalls as $toolCall) {
+        $res = $this->tools->callTool($tools[0], $toolCall->function->arguments);
+
+        $mistralAiMessages[] = $message;
+        $mistralAiMessages[] = new MistralAiMessage(
+          'tool',
+          $res,
+          name: $tools[0]->name,
+          toolCallId: $toolCall->id,
+        );
+        goto next;
+      }
+    }
+
     try {
       $dataObject = $format !== null
         ? $this->serializer->deserialize($message->content, $responseDataType, 'json')

@@ -9,6 +9,7 @@ class ArrayType {
 
   public function __construct(
     public ?string $itemType = null,
+    public ?string $itemClass = null
   ) {}
 
 }

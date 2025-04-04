@@ -6,7 +6,6 @@ use AiBundle\Json\SchemaGenerator;
 use AiBundle\Json\SchemaGeneratorException;
 use AiBundle\LLM\AbstractLLM;
 use AiBundle\LLM\GenerateOptions;
-use AiBundle\LLM\LLMDataResponse;
 use AiBundle\LLM\LLMResponse;
 use AiBundle\LLM\OpenAi\Dto\ChatCompletionRequest;
 use AiBundle\LLM\OpenAi\Dto\ChatCompletionResponse;
@@ -42,7 +41,8 @@ class OpenAi extends AbstractLLM {
   public function generate(
     array $messages,
     ?GenerateOptions $options = null,
-    ?string $responseDataType = null
+    ?string $responseDataType = null,
+    ?array $tools = null
   ): LLMResponse {
     try {
       $format = $responseDataType ? $this->schemaGenerator->generateForClass($responseDataType) : null;

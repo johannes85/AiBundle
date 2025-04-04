@@ -51,7 +51,8 @@ class GoogleAi extends AbstractLLM {
   public function generate(
     array $messages,
     ?GenerateOptions $options = null,
-    ?string $responseDataType = null
+    ?string $responseDataType = null,
+    ?array $tools = null
   ): LLMResponse {
     try {
       $format = $responseDataType ? $this->schemaGenerator->generateForClass($responseDataType) : null;

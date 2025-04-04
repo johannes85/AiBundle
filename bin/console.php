@@ -7,7 +7,7 @@ use AiBundle\Examples\DetectCars;
 use AiBundle\Examples\DetectLicencePlate;
 use AiBundle\Examples\PersistentChatCommand;
 use AiBundle\Examples\SolveCaptchaCommand;
-use Psr\Log\LoggerInterface;
+use AiBundle\Examples\ToolCallCommand;use Psr\Log\LoggerInterface;
 use Symfony\Component\Config\FileLocator;
 use Symfony\Component\Console\Application;
 use Symfony\Component\Console\Logger\ConsoleLogger;
@@ -33,6 +33,7 @@ $app->addCommands([
   $container->get(SolveCaptchaCommand::class),
   $container->get(DetectLicencePlate::class),
   $container->get(BasicExamplesCommand::class),
-  $container->get(DetectCars::class)
+  $container->get(DetectCars::class),
+  $container->get(ToolCallCommand::class)
 ]);
 $app->run();

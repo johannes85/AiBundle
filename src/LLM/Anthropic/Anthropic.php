@@ -6,7 +6,6 @@ use AiBundle\Json\SchemaGenerator;
 use AiBundle\Json\SchemaGeneratorException;
 use AiBundle\LLM\AbstractLLM;
 use AiBundle\LLM\Anthropic\Dto\AnthropicMessage;
-use AiBundle\LLM\Anthropic\Dto\ContentBlock;
 use AiBundle\LLM\Anthropic\Dto\MessagesRequest;
 use AiBundle\LLM\Anthropic\Dto\MessagesResponse;
 use AiBundle\LLM\Anthropic\Dto\Tool;
@@ -15,9 +14,6 @@ use AiBundle\LLM\Anthropic\Dto\ToolChoiceType;
 use AiBundle\LLM\GenerateOptions;
 use AiBundle\LLM\LLMDataResponse;
 use AiBundle\LLM\LLMResponse;
-use AiBundle\LLM\OpenAi\Dto\AbstractOpenAiMessage;
-use AiBundle\LLM\OpenAi\Dto\ChatCompletionRequest;
-use AiBundle\LLM\OpenAi\Dto\ChatCompletionResponse;
 use AiBundle\Prompting\Message;
 use AiBundle\Prompting\MessageRole;
 use SensitiveParameter;
@@ -57,7 +53,8 @@ class Anthropic extends AbstractLLM {
   public function generate(
     array $messages,
     ?GenerateOptions $options = null,
-    ?string $responseDataType = null
+    ?string $responseDataType = null,
+    ?array $tools = null
   ): LLMResponse {
     try {
       $format = $responseDataType ? $this->schemaGenerator->generateForClass($responseDataType) : null;

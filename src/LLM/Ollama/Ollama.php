@@ -6,19 +6,20 @@ use AiBundle\Json\SchemaGenerator;
 use AiBundle\Json\SchemaGeneratorException;
 use AiBundle\LLM\AbstractLLM;
 use AiBundle\LLM\GenerateOptions;
-use AiBundle\LLM\LLMDataResponse;
 use AiBundle\LLM\LLMException;
 use AiBundle\LLM\LLMResponse;
 use AiBundle\LLM\Ollama\Dto\GenerateChatParameters;
-use AiBundle\LLM\Ollama\Dto\OllamaMessage;
 use AiBundle\LLM\Ollama\Dto\OllamaChatResponse;
-use AiBundle\Prompting\Message;
+use AiBundle\LLM\Ollama\Dto\OllamaMessage;
 use AiBundle\LLM\Ollama\Dto\OllamaOptions;
+use AiBundle\Prompting\Message;
+use AiBundle\Prompting\Tools\Tool;
+use AiBundle\Prompting\Tools\Tools;
 use SensitiveParameter;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
+use Symfony\Component\Serializer\Exception\ExceptionInterface as SerializerExceptionInterface;
 use Symfony\Component\Serializer\Normalizer\AbstractObjectNormalizer;
 use Symfony\Component\Serializer\Serializer;
-use Symfony\Component\Serializer\Exception\ExceptionInterface as SerializerExceptionInterface;
 use Symfony\Contracts\HttpClient\Exception\ExceptionInterface as HttpClientExceptionInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
@@ -39,7 +40,8 @@ class Ollama extends AbstractLLM {
   public function generate(
     array $messages,
     ?GenerateOptions $options = null,
-    ?string $responseDataType = null
+    ?string $responseDataType = null,
+    ?array $tools = null
   ): LLMResponse {
     try {
       $format = $responseDataType ? $this->schemaGenerator->generateForClass($responseDataType) : null;
