@@ -127,6 +127,8 @@ In this example, the following services will be registered:
 - ai_bundle.llm.anthropic
 - ai_bundle.llm.ollama
 
+When configuring the "default" instance of a llm, in addition to the id, the class itself (e.g. AiBundle\LLM\OpenAi\OpenAi) will be registered as a service.
+
 ### Execute standalone examples
 This bundle provides standalone examples of the features provided.
 They can be executed by a central console command similar to the Symfony console:

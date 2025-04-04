@@ -2,6 +2,7 @@
 
 namespace AiBundle;
 
+use AiBundle\LLM\Ollama\Ollama;
 use Symfony\Component\Config\Definition\Configurator\DefinitionConfigurator;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Definition;
@@ -100,8 +101,10 @@ class AiBundle extends AbstractBundle {
     if (isset($config['llms'])) {
       foreach ($config['llms'] as $llmType => $llmConfigs) {
         foreach ($llmConfigs as $llmConfigName => $llmParameters) {
+          $defaultConfig = $llmConfigName === self::DEFAULT_LLM_CONFIG_NAME;
+          $definitionId = self::LLM_DEFINITION_PREFIX.$llmType.($defaultConfig ? '' : ('.'.$llmConfigName));
           $builder->setDefinition(
-            self::LLM_DEFINITION_PREFIX.$llmType.($llmConfigName === self::DEFAULT_LLM_CONFIG_NAME ? '' : ('.'.$llmConfigName)),
+            $definitionId,
             (new Definition(
               self::LLM_CLASS_NAMES[$llmType],
               match ($llmType) {
@@ -127,6 +130,9 @@ class AiBundle extends AbstractBundle {
               }
             ))->setAutowired(true)
           );
+          if ($defaultConfig) {
+            $builder->setAlias(Ollama::class, $definitionId);
+          }
         }
       }
     }
