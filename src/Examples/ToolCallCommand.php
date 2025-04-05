@@ -37,15 +37,20 @@ class ToolCallCommand extends AbstractExampleCommand {
     $output->writeln(
       $this->llm->generate(
         [
-          new Message(MessageRole::HUMAN, 'What is the current weather in Karlsruhe, Germany')
+          new Message(MessageRole::HUMAN, 'What is the current weather in Karlsruhe AND Stuttgart, Germany')
         ],
         (new GenerateOptions())
           ->setTemperature(0.8),
         toolbox: new Toolbox(
-          new Tool('getWeather', 'Retrieves current weather', fn (Coordinates $coordinates, string $foo = 'bar') =>
-            file_get_contents(
-              'https://api.open-meteo.com/v1/forecast?latitude='.$coordinates->latitude.'&longitude='.$coordinates->longitude.'&current=temperature,windspeed'
-            )
+          new Tool(
+            'getWeather',
+            'Retrieves current weather',
+            function (Coordinates $coordinates) use ($output) {
+              $output->writeln('Called tool with coordinates: '.json_encode($coordinates));
+              return file_get_contents(
+                'https://api.open-meteo.com/v1/forecast?latitude=' . $coordinates->latitude . '&longitude=' . $coordinates->longitude . '&current=temperature,windspeed'
+              );
+            }
           )
         )
       )->message->content
