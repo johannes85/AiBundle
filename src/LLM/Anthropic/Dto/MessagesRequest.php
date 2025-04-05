@@ -13,7 +13,7 @@ class MessagesRequest {
   #[SerializedName('tool_choice')] private ?ToolChoice $toolChoice = null;
 
   /**
-   * @var array<Tool>|null
+   * @var array<AnthropicTool>|null
    */
   private ?array $tools = null;
 
@@ -110,14 +110,14 @@ class MessagesRequest {
   }
 
   /**
-   * @return array<Tool>|null
+   * @return array<AnthropicTool>|null
    */
   public function getTools(): ?array {
     return $this->tools;
   }
 
   /**
-   * @param array<Tool>|null $tools
+   * @param array<AnthropicTool>|null $tools
    * @return static
    */
   public function setTools(?array $tools): static {

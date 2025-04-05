@@ -2,11 +2,19 @@
 
 namespace AiBundle\LLM\Anthropic\Dto;
 
+use Symfony\Component\Serializer\Attribute\SerializedName;
+
 class ContentBlock {
 
   private ContentBlockType|null $type = null;
   private ?string $text = null;
   private ?Source $source = null;
+
+  private ?string $name = null;
+
+  #[SerializedName('tool_use_id')] private ?string $toolUseId = null;
+
+  private ?string $content = null;
 
   /** @var array<mixed>|null  */
   private ?array $input = null;
@@ -63,6 +71,33 @@ class ContentBlock {
    */
   public function setSource(?Source $source): static {
     $this->source = $source;
+    return $this;
+  }
+
+  public function getName(): ?string {
+    return $this->name;
+  }
+
+  public function setName(?string $name): ContentBlock {
+    $this->name = $name;
+    return $this;
+  }
+
+  public function getToolUseId(): ?string {
+    return $this->toolUseId;
+  }
+
+  public function setToolUseId(?string $toolUseId): ContentBlock {
+    $this->toolUseId = $toolUseId;
+    return $this;
+  }
+
+  public function getContent(): ?string {
+    return $this->content;
+  }
+
+  public function setContent(?string $content): ContentBlock {
+    $this->content = $content;
     return $this;
   }
 

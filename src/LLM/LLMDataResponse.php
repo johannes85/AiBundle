@@ -8,7 +8,7 @@ class LLMDataResponse extends LLMResponse {
 
   public function __construct(
     Message $message,
-    ?object $data
+    ?object $data = null
   ) {
     parent::__construct($message, $data);
   }

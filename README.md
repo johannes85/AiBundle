@@ -11,7 +11,7 @@ The following backends are supported:
 | OpenAI     | ✅ | ✅ | ✅ | https://openai.com/        |
 | Ollama     | ✅ | ✅ | ✅ | https://ollama.ai/         |
 | GoogleAI   | ✅ | ✅ | ❌ | https://ai.google.dev      |
-| Anthropic  | ✅ | ✅ | ❌ | https://www.anthropic.com/ |
+| Anthropic  | ✅ | ✅ | ✅ | https://www.anthropic.com/ |
 | Mistral AI | ✅ | ✅ | ✅ | https://mistral.ai/        |
 
 ## Requirements

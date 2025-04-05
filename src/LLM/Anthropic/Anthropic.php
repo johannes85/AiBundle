@@ -6,9 +6,11 @@ use AiBundle\Json\SchemaGenerator;
 use AiBundle\Json\SchemaGeneratorException;
 use AiBundle\LLM\AbstractLLM;
 use AiBundle\LLM\Anthropic\Dto\AnthropicMessage;
+use AiBundle\LLM\Anthropic\Dto\ContentBlock;
+use AiBundle\LLM\Anthropic\Dto\ContentBlockType;
 use AiBundle\LLM\Anthropic\Dto\MessagesRequest;
 use AiBundle\LLM\Anthropic\Dto\MessagesResponse;
-use AiBundle\LLM\Anthropic\Dto\Tool;
+use AiBundle\LLM\Anthropic\Dto\AnthropicTool;
 use AiBundle\LLM\Anthropic\Dto\ToolChoice;
 use AiBundle\LLM\Anthropic\Dto\ToolChoiceType;
 use AiBundle\LLM\GenerateOptions;
@@ -16,7 +18,9 @@ use AiBundle\LLM\LLMDataResponse;
 use AiBundle\LLM\LLMResponse;
 use AiBundle\Prompting\Message;
 use AiBundle\Prompting\MessageRole;
+use AiBundle\Prompting\Tools\Tool;
 use AiBundle\Prompting\Tools\Toolbox;
+use AiBundle\Prompting\Tools\ToolsHelper;
 use SensitiveParameter;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\Serializer\Exception\ExceptionInterface as SerializerExceptionInterface;
@@ -30,6 +34,8 @@ class Anthropic extends AbstractLLM {
 
   private const ENDPOINT = 'https://api.anthropic.com/v1';
   private const API_VERSION = '2023-06-01';
+
+  private const RETURN_DATA_TOOL_NAME = 'return-json-data';
 
   private const MAX_TOKENS_DEFAULT = [
     'claude-3-7-sonnet' => 8192,
@@ -45,7 +51,8 @@ class Anthropic extends AbstractLLM {
     private readonly float $timeout,
     #[Autowire('@ai_bundle.rest.http_client')] private readonly HttpClientInterface $httpClient,
     #[Autowire('@ai_bundle.rest.serializer')] private readonly Serializer $serializer,
-    private readonly SchemaGenerator $schemaGenerator
+    private readonly SchemaGenerator $schemaGenerator,
+    private readonly ToolsHelper $toolsHelper
   ) {}
 
   /**
@@ -57,6 +64,12 @@ class Anthropic extends AbstractLLM {
     ?string $responseDataType = null,
     ?Toolbox $toolbox = null
   ): LLMResponse {
+    if ($responseDataType !== null && $toolbox !== null) {
+      throw new LLMException(
+        'Structured responses (responseDataType) and tool calling can\'t be used at the same time by this LLM'
+      );
+    }
+
     try {
       $format = $responseDataType ? $this->schemaGenerator->generateForClass($responseDataType) : null;
     } catch (SchemaGeneratorException $ex) {
@@ -73,45 +86,91 @@ class Anthropic extends AbstractLLM {
     }
     $aMessages = array_map(fn (Message $message) => AnthropicMessage::fromMessage($message), $messages);
 
-    $req = MessagesRequest::fromGenerateOptions(
-      $this->model,
-      $aMessages,
-      $this->getModelDefaultMaxTokens($this->model),
-      $options
-    )
-      ->setSystem($systemInstruction);
-    if ($format) {
-      $req
-        ->setTools([
-          new Tool(
-            'return-json-data',
+    $finalResponse = null;
+    do {
+      $req = MessagesRequest::fromGenerateOptions(
+        $this->model,
+        $aMessages,
+        $this->getModelDefaultMaxTokens($this->model),
+        $options
+      )
+        ->setSystem($systemInstruction);
+      if ($toolbox !== null) {
+        $req->setTools(array_map(fn (Tool $tool) => new AnthropicTool(
+          $tool->name,
+          $tool->description,
+          $this->toolsHelper->getToolCallbackSchema($tool)
+        ), $toolbox->getTools()));
+      } elseif ($format !== null) {
+        $req
+          ->setTools([new AnthropicTool(
+            self::RETURN_DATA_TOOL_NAME,
             'Returns answer as json data',
             $format
-          )
-        ])
-        ->setToolChoice(new ToolChoice(ToolChoiceType::TOOL, name: 'return-json-data'));
-    }
+          )])
+          ->setToolChoice(new ToolChoice(ToolChoiceType::TOOL, name: self::RETURN_DATA_TOOL_NAME));
+      }
 
-    /** @var MessagesResponse $res */
-    $res = $this->doRequest(
-      'POST',
-      '/messages',
-      MessagesResponse::class,
-      $req
-    );
+      /** @var MessagesResponse $res */
+      $res = $this->doRequest(
+        'POST',
+        '/messages',
+        MessagesResponse::class,
+        $req
+      );
 
-    $content = $res->content[0];
-    try {
-      $dataObject = $format !== null
-        ? $this->serializer->denormalize($content->getInput(), $responseDataType)
-        : null;
-    } catch (SerializerExceptionInterface) {
-      $dataObject = null;
-    }
-    return new LLMDataResponse(
-      new Message(MessageRole::AI, $content->getText() ?? ''),
-      $dataObject
-    );
+      $toolCalls = array_filter(
+        $res->content,
+        fn (ContentBlock $contentBlock) =>
+          $contentBlock->getType() === ContentBlockType::TOOL_USE &&
+          $contentBlock->getName() !== self::RETURN_DATA_TOOL_NAME
+      );
+      if (!empty($toolCalls)) {
+        $aMessages[] = new AnthropicMessage(
+          'assistant',
+          $res->content
+        );
+        foreach ($toolCalls as $toolCall) {
+          $tool = $toolbox->getTool($toolCall->getName());
+          $res = $this->toolsHelper->callTool($tool, $toolCall->getInput());
+          $aMessages[] = new AnthropicMessage(
+            'user',
+            [
+              (new ContentBlock())
+                ->setType(ContentBlockType::TOOL_RESULT)
+                ->setToolUseId($toolCall->getId())
+                ->setContent($res)
+            ]
+          );
+        }
+      } else {
+        $returnDataToolCalls = array_filter(
+          $res->content,
+          fn (ContentBlock $contentBlock) =>
+            $contentBlock->getType() === ContentBlockType::TOOL_USE &&
+            $contentBlock->getName() === self::RETURN_DATA_TOOL_NAME
+        );
+        if (!empty($returnDataToolCalls)) {
+          try {
+            $dataObject = $format !== null
+              ? $this->serializer->denormalize($returnDataToolCalls[0]->getInput(), $responseDataType)
+              : null;
+          } catch (SerializerExceptionInterface) {
+            $dataObject = null;
+          }
+          $finalResponse = new LLMDataResponse(
+            new Message(MessageRole::AI, ''),
+            $dataObject
+          );
+        } else {
+          $finalResponse = new LLMDataResponse(
+            new Message(MessageRole::AI, $res->content[0]->getText() ?? '')
+          );
+        }
+      }
+    } while ($finalResponse === null);
+
+    return $finalResponse;
   }
 
   /**

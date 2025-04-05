@@ -4,7 +4,7 @@ namespace AiBundle\LLM\Anthropic\Dto;
 
 use Symfony\Component\Serializer\Attribute\SerializedName;
 
-class Tool {
+class AnthropicTool {
 
   /**
    * @param string $name
