@@ -7,8 +7,11 @@ use AiBundle\Json\SchemaGeneratorException;
 use AiBundle\LLM\AbstractLLM;
 use AiBundle\LLM\GenerateOptions;
 use AiBundle\LLM\GoogleAi\Dto\Content;
+use AiBundle\LLM\GoogleAi\Dto\FunctionDeclaration;
+use AiBundle\LLM\GoogleAi\Dto\FunctionResponse;
 use AiBundle\LLM\GoogleAi\Dto\GenerateContentParameters;
 use AiBundle\LLM\GoogleAi\Dto\GenerationConfig;
+use AiBundle\LLM\GoogleAi\Dto\GoogleAiTool;
 use AiBundle\LLM\GoogleAi\Dto\InlineData;
 use AiBundle\LLM\GoogleAi\Dto\Part;
 use AiBundle\LLM\LLMDataResponse;
@@ -16,7 +19,9 @@ use AiBundle\LLM\LLMResponse;
 use AiBundle\Prompting\FileType;
 use AiBundle\Prompting\Message;
 use AiBundle\Prompting\MessageRole;
+use AiBundle\Prompting\Tools\Tool;
 use AiBundle\Prompting\Tools\Toolbox;
+use AiBundle\Prompting\Tools\ToolsHelper;
 use SensitiveParameter;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\Serializer\Exception\ExceptionInterface as SerializerExceptionInterface;
@@ -43,7 +48,8 @@ class GoogleAi extends AbstractLLM {
     private readonly float $timeout,
     #[Autowire('@ai_bundle.rest.http_client')] private readonly HttpClientInterface $httpClient,
     #[Autowire('@ai_bundle.rest.serializer')] private readonly Serializer $serializer,
-    private readonly SchemaGenerator $schemaGenerator
+    private readonly SchemaGenerator $schemaGenerator,
+    private readonly ToolsHelper $toolsHelper
   ) {}
 
   /**
@@ -101,30 +107,60 @@ class GoogleAi extends AbstractLLM {
       }
     }
 
-    $res = $this->doRequest(
-      'POST',
-      'generateContent',
-      GoogleAiResponse::class,
-      new GenerateContentParameters(
-        $contents,
-        $systemInstruction,
-        $generationConfig
-      )
-    );
+    $finalResponse = null;
+    do {
+      $res = $this->doRequest(
+        'POST',
+        'generateContent',
+        GoogleAiResponse::class,
+        (new GenerateContentParameters(
+          $contents,
+          $systemInstruction,
+          $generationConfig
+        ))
+          ->setTools($toolbox !== null ? array_map(fn (Tool $tool) => new GoogleAiTool(
+            [FunctionDeclaration::fromTool($tool, $this->toolsHelper)]
+          ), $toolbox->getTools()) : null)
+      );
 
-    $responseText = $res->candidates[0]->content->parts[0]->getText();
-    try {
-      $dataObject = $format !== null
-        ? $this->serializer->deserialize($responseText, $responseDataType, 'json')
-        : null;
-    } catch (SerializerExceptionInterface) {
-      $dataObject = null;
-    }
+      /** @var Content $content */
+      $content = $res->candidates[0]->content;
+      $functionCallParts = array_filter($content->parts, fn(Part $part) => !empty($part->getFunctionCall()));
 
-    return new LLMDataResponse(
-      new Message(MessageRole::AI, $responseText),
-      $dataObject
-    );
+      if (!empty($functionCallParts)) {
+        $contents[] = $content;
+
+        $functionResponseParts = [];
+        foreach ($functionCallParts as $part) {
+          $functionCall = $part->getFunctionCall();
+          $tool = $toolbox->getTool($functionCall->name);
+          $res = $this->toolsHelper->callTool($tool, $functionCall->args);
+          if (!is_array($res)) {
+            $res = ['content' => $res];
+          }
+          $functionResponseParts[] = (new Part())->setFunctionResponse(new FunctionResponse(
+            $functionCall->name,
+            $res
+          ));
+        }
+        $contents[] = new Content($functionResponseParts);
+      } else {
+        $responseText = $content->parts[0]->getText();
+        try {
+          $dataObject = $format !== null
+            ? $this->serializer->deserialize($responseText, $responseDataType, 'json')
+            : null;
+        } catch (SerializerExceptionInterface) {
+          $dataObject = null;
+        }
+        $finalResponse = new LLMDataResponse(
+          new Message(MessageRole::AI, $responseText),
+          $dataObject
+        );
+      }
+    } while ($finalResponse === null);
+
+    return $finalResponse;
   }
 
   /**

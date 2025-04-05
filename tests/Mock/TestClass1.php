@@ -3,6 +3,7 @@
 namespace AiBundle\Tests\Mock;
 
 use AiBundle\Json\Attributes\ArrayType;
+use AiBundle\Json\Attributes\Description;
 use AiBundle\Tests\Mock\SubNamespace\TestClass2;
 
 class TestClass1 {
@@ -10,7 +11,7 @@ class TestClass1 {
   public const SCHEMA = [
     'type' => 'object',
     'properties' => [
-      'pString' => ['type' => 'string'],
+      'pString' => ['type' => 'string', 'description' => 'pString description'],
       'pNullableString' => ['type' => 'string'],
       'pNullableString2' => ['type' => 'string'],
       'pNUll' => ['type' => 'null'],
@@ -71,6 +72,7 @@ class TestClass1 {
     ],
   ];
 
+  #[Description('pString description')]
   public string $pString;
 
   public ?string $pNullableString;

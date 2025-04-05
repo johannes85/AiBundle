@@ -6,8 +6,8 @@ class Part {
 
   private ?string $text = null;
   private ?InlineData $inlineData = null;
-  private ?object $functionCall = null;
-  private ?object $functionResponse = null;
+  private ?FunctionCall $functionCall = null;
+  private ?FunctionResponse $functionResponse = null;
   private ?object $fileData = null;
   private ?object $executableCode = null;
   private ?object $codeExecutionResult = null;
@@ -45,17 +45,17 @@ class Part {
   }
 
   /**
-   * @return object|null
+   * @return FunctionCall|null
    */
-  public function getFunctionCall(): ?object {
+  public function getFunctionCall(): ?FunctionCall {
     return $this->functionCall;
   }
 
   /**
-   * @param object|null $functionCall
-   * @return static
+   * @param FunctionCall|null $functionCall
+   * @return $this
    */
-  public function setFunctionCall(?object $functionCall): static {
+  public function setFunctionCall(?FunctionCall $functionCall): Part {
     $this->functionCall = $functionCall;
     return $this;
   }

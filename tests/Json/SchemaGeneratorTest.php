@@ -3,6 +3,7 @@
 namespace AiBundle\Tests\Json;
 
 use AiBundle\Json\Attributes\ArrayType;
+use AiBundle\Json\Attributes\Description;
 use AiBundle\Json\SchemaGenerator;
 use AiBundle\Tests\Mock\TestClass1;
 use PHPUnit\Framework\TestCase;
@@ -13,7 +14,7 @@ class SchemaGeneratorTest extends TestCase {
     $generator = new SchemaGenerator();
     $schema = $generator->generateForClosureParameters(function (
       TestClass1 $param1,
-      int $param2,
+      #[Description('param2 description')] int $param2,
       #[ArrayType('number')] ?array $param3 = null
     ) {});
     $this->assertEquals(
@@ -21,7 +22,7 @@ class SchemaGeneratorTest extends TestCase {
         'type' => 'object',
         'properties' => [
           'param1' => TestClass1::SCHEMA,
-          'param2' => ['type' => 'integer'],
+          'param2' => ['type' => 'integer', 'description' => 'param2 description'],
           'param3' => ['type' => 'array', 'items' => ['type' => 'number']],
         ],
         'required' => ['param1', 'param2']

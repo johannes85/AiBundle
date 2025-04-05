@@ -3,6 +3,7 @@
 namespace AiBundle\Examples;
 
 use AiBundle\Json\Attributes\ArrayType;
+use AiBundle\Json\Attributes\Description;
 use AiBundle\LLM\GenerateOptions;
 use AiBundle\LLM\LLMException;
 use AiBundle\Prompting\Message;
@@ -16,7 +17,9 @@ use Symfony\Component\Console\Output\OutputInterface;
 
 class Coordinates {
   public function __construct(
+    #[Description('Latitude, for example 52.52')]
     public readonly string $latitude,
+    #[Description('Longitude, for example 13.41')]
     public readonly string $longitude,
   ) {}
 }
@@ -38,7 +41,10 @@ class ToolCallCommand extends AbstractExampleCommand {
     $output->writeln(
       $this->llm->generate(
         [
-          new Message(MessageRole::HUMAN, 'What is the current weather in Karlsruhe AND Stuttgart, Germany')
+          new Message(
+            MessageRole::HUMAN,
+            'What is the current weather in Karlsruhe (49° 1′ N , 8° 24′ O) and Stuttgart (48° 47′ N, 9° 11′ O), Germany'
+          )
         ],
         (new GenerateOptions())
           ->setTemperature(0.8),

@@ -3,6 +3,7 @@
 namespace AiBundle\Json;
 
 use AiBundle\Json\Attributes\ArrayType;
+use AiBundle\Json\Attributes\Description;
 use Closure;
 use ReflectionClass;
 use ReflectionException;
@@ -140,6 +141,9 @@ class SchemaGenerator {
       }
       $required = !$propertyType->allowsNull();
     }
+    if (!empty($attributes = $property->getAttributes(Description::class))) {
+      $value['description'] = $attributes[0]->newInstance()->description;
+    }
     return [
       'name' => $property->getName(),
       'value' => $value,
@@ -194,6 +198,9 @@ class SchemaGenerator {
         $schema = $this->generateForClass($type->getName());
       }
       $required = !$parameter->isDefaultValueAvailable();
+    }
+    if (!empty($attributes = $parameter->getAttributes(Description::class))) {
+      $schema['description'] = $attributes[0]->newInstance()->description;
     }
     return [
       'schema' => $schema,
