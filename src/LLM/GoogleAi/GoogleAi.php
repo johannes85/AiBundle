@@ -135,7 +135,7 @@ class GoogleAi extends AbstractLLM {
           $functionCall = $part->getFunctionCall();
           $tool = $toolbox->getTool($functionCall->name);
           $toolRes = $this->toolsHelper->callTool($tool, $functionCall->args);
-          if (!is_array($res)) {
+          if (!is_array($toolRes)) {
             $toolRes = ['content' => $toolRes];
           }
           $functionResponseParts[] = (new Part())->setFunctionResponse(new FunctionResponse(

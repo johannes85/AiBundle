@@ -12,7 +12,7 @@ class MessagesRequest {
   private ?string $system = null;
   #[SerializedName('tool_choice')] private ?ToolChoice $toolChoice = null;
   #[SerializedName('top_k')] private ?int $topK = null;
-  #[SerializedName('top_p')] private ?int $topP = null;
+  #[SerializedName('top_p')] private ?float $topP = null;
 
 
   /**
@@ -139,11 +139,11 @@ class MessagesRequest {
     return $this;
   }
 
-  public function getTopP(): ?int {
+  public function getTopP(): ?float {
     return $this->topP;
   }
 
-  public function setTopP(?int $topP): MessagesRequest {
+  public function setTopP(?float $topP): MessagesRequest {
     $this->topP = $topP;
     return $this;
   }
