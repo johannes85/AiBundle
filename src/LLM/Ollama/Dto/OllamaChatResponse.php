@@ -2,8 +2,10 @@
 
 namespace AiBundle\LLM\Ollama\Dto;
 
-class OllamaChatResponse {
+readonly class OllamaChatResponse {
 
-  public OllamaMessage $message;
+  public function __construct(
+    public OllamaMessage $message
+  ) {}
 
 }

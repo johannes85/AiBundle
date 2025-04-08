@@ -8,7 +8,7 @@ use AiBundle\Prompting\MessageRole;
 use InvalidArgumentException;
 use Symfony\Component\Serializer\Attribute\SerializedName;
 
-class OpenAiMessage {
+readonly class OpenAiMessage {
 
   /**
    * @param string $role
@@ -18,11 +18,11 @@ class OpenAiMessage {
    * @param array<ToolCall>|null $toolCalls
    */
   public function __construct(
-    public readonly string $role,
-    public readonly string|array|null $content,
-    public readonly ?string $name = null,
-    #[SerializedName('tool_call_id')] public readonly ?string $toolCallId = null,
-    #[SerializedName('tool_calls')] public readonly ?array $toolCalls = null
+    public string $role,
+    public string|array|null $content,
+    public ?string $name = null,
+    #[SerializedName('tool_call_id')] public ?string $toolCallId = null,
+    #[SerializedName('tool_calls')] public ?array $toolCalls = null
   ) {}
 
   /**

@@ -4,12 +4,12 @@ namespace AiBundle\LLM\Anthropic\Dto;
 
 use Symfony\Component\Serializer\Attribute\SerializedName;
 
-class Source {
+readonly class Source {
 
   public function __construct(
-    public readonly string $type,
-    #[SerializedName('media_type')] public readonly string $mediaType,
-    public readonly string $data
+    public string $type,
+    #[SerializedName('media_type')] public string $mediaType,
+    public string $data
   ) {}
 
   /**

@@ -9,7 +9,7 @@ use AiBundle\Prompting\MessageRole;
 use InvalidArgumentException;
 use Symfony\Component\Serializer\Attribute\SerializedName;
 
-class OllamaMessage {
+readonly class OllamaMessage {
 
   /**
    * @param string $role
@@ -18,10 +18,10 @@ class OllamaMessage {
    * @param array<ToolCall>|null $toolCalls
    */
   public function __construct(
-    public readonly string $role,
-    public readonly string $content,
-    public readonly array $images = [],
-    #[SerializedName('tool_calls')] public readonly ?array $toolCalls = null
+    public string $role,
+    public string $content,
+    public array $images = [],
+    #[SerializedName('tool_calls')] public ?array $toolCalls = null
   ) {}
 
   /**

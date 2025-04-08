@@ -2,11 +2,11 @@
 
 namespace AiBundle\LLM\OpenAi\Dto;
 
-class ImageUrl {
+readonly class ImageUrl {
 
   public function __construct(
-    public readonly string $url,
-    public readonly ?DetailLevel $detail = null
+    public string $url,
+    public ?DetailLevel $detail = null
   ) {}
 
 }

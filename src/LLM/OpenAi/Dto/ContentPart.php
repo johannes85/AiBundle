@@ -2,7 +2,6 @@
 
 namespace AiBundle\LLM\OpenAi\Dto;
 
-use Svg\Tag\Image;
 use Symfony\Component\Serializer\Annotation\SerializedName;
 
 class ContentPart {

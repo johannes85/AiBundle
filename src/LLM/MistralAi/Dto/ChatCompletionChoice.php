@@ -2,10 +2,10 @@
 
 namespace AiBundle\LLM\MistralAi\Dto;
 
-class ChatCompletionChoice {
+readonly class ChatCompletionChoice {
 
   public function __construct(
-    public readonly MistralAiMessage $message
+    public MistralAiMessage $message
   ) {}
 
 }

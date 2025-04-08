@@ -2,9 +2,6 @@
 
 namespace AiBundle\LLM\Ollama\Dto;
 
-use AiBundle\LLM\Ollama\Dto\AbstractGenerateParameters;
-use AiBundle\LLM\Ollama\Dto\OllamaOptions;
-use AiBundle\LLM\Ollama\Ollama;
 use LLM\Ollama\Dto\OllamaFunctionTool;
 
 class GenerateChatParameters {

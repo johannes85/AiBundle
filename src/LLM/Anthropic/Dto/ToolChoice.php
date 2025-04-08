@@ -4,12 +4,12 @@ namespace AiBundle\LLM\Anthropic\Dto;
 
 use Symfony\Component\Serializer\Attribute\SerializedName;
 
-class ToolChoice {
+readonly class ToolChoice {
 
   public function __construct(
-    public readonly ToolChoiceType $type,
-    #[SerializedName('disable_parallel_tool_use')] public readonly ?bool $disableParallelToolUse = null,
-    public readonly ?string $name = null,
+    public ToolChoiceType $type,
+    #[SerializedName('disable_parallel_tool_use')] public ?bool $disableParallelToolUse = null,
+    public ?string $name = null,
   ) {}
 
 }

@@ -2,10 +2,10 @@
 
 namespace AiBundle\LLM\OpenAi\Dto;
 
-class OpenAiTool {
+readonly class OpenAiTool {
 
   public function __construct(
-    public readonly OpenAiFunction $function
+    public OpenAiFunction $function
   ) {}
 
   public function getType(): string {

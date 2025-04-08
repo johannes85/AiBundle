@@ -2,10 +2,10 @@
 
 namespace AiBundle\LLM\MistralAi\Dto;
 
-class MistralTool {
+readonly class MistralTool {
 
   public function __construct(
-    public readonly MistralFunction $function
+    public MistralFunction $function
   ) {}
 
   public function getType(): string {

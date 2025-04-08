@@ -6,7 +6,7 @@ use AiBundle\Prompting\Tools\Tool;
 use AiBundle\Prompting\Tools\ToolsHelper;
 use AiBundle\Prompting\Tools\ToolsHelperException;
 
-class OllamaFunction {
+readonly class OllamaFunction {
 
   /**
    * @param string $name
@@ -14,9 +14,9 @@ class OllamaFunction {
    * @param array<mixed> $parameters
    */
   public function __construct(
-    public readonly string $name,
-    public readonly string $description,
-    public readonly array $parameters
+    public string $name,
+    public string $description,
+    public array $parameters
   ) {}
 
   /**

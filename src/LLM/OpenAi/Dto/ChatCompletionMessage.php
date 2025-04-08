@@ -2,8 +2,10 @@
 
 namespace AiBundle\LLM\OpenAi\Dto;
 
-class ChatCompletionMessage {
+readonly class ChatCompletionMessage {
 
-  public string $content;
+  public function __construct(
+    public string $content
+  ) {}
 
 }

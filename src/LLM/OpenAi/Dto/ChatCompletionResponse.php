@@ -2,9 +2,13 @@
 
 namespace AiBundle\LLM\OpenAi\Dto;
 
-class ChatCompletionResponse {
+readonly class ChatCompletionResponse {
 
-  /** @var array<ChatCompletionChoice> */
-  public array $choices;
+  /**
+   * @param array<ChatCompletionChoice> $choices
+   */
+  public function __construct(
+    public array $choices
+  ) {}
 
 }

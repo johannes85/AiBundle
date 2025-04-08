@@ -4,11 +4,11 @@ namespace AiBundle\LLM\MistralAi\Dto;
 
 use Symfony\Component\Serializer\Attribute\SerializedName;
 
-class ResponseFormat {
+readonly class ResponseFormat {
 
   public function __construct(
-    public readonly string $type,
-    #[SerializedName('json_schema')] public readonly ?JsonSchema $jsonSchema
+    public string $type,
+    #[SerializedName('json_schema')] public ?JsonSchema $jsonSchema
   ) {}
 
 }

@@ -2,12 +2,12 @@
 
 namespace AiBundle\LLM\OpenAi\Dto;
 
-class ToolCall {
+readonly class ToolCall {
 
   public function __construct(
-    public readonly string $id,
-    public readonly FunctionCall $function,
-    public readonly string $type = 'function',
+    public string $id,
+    public FunctionCall $function,
+    public string $type = 'function',
   ) {}
 
 }

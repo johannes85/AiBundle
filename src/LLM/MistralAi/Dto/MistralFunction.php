@@ -6,7 +6,7 @@ use AiBundle\Prompting\Tools\Tool;
 use AiBundle\Prompting\Tools\ToolsHelper;
 use AiBundle\Prompting\Tools\ToolsHelperException;
 
-class MistralFunction {
+readonly class MistralFunction {
 
   /**
    * @param string $name
@@ -15,10 +15,10 @@ class MistralFunction {
    * @param bool $strict
    */
   public function __construct(
-    public readonly string $name,
-    public readonly string $description,
-    public readonly array $parameters,
-    public readonly bool $strict = false
+    public string $name,
+    public string $description,
+    public array $parameters,
+    public bool $strict = false
   ) {}
 
   /**

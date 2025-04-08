@@ -2,10 +2,10 @@
 
 namespace AiBundle\LLM\Ollama\Dto;
 
-class ToolCall {
+readonly class ToolCall {
 
   public function __construct(
-    public readonly FunctionCall $function
+    public FunctionCall $function
   ) {}
 
 }

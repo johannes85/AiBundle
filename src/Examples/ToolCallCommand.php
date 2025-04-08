@@ -2,7 +2,6 @@
 
 namespace AiBundle\Examples;
 
-use AiBundle\Json\Attributes\ArrayType;
 use AiBundle\Json\Attributes\Description;
 use AiBundle\LLM\GenerateOptions;
 use AiBundle\LLM\LLMException;

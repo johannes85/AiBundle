@@ -9,7 +9,7 @@ use AiBundle\Prompting\Message;
 use AiBundle\Prompting\MessageRole;
 use InvalidArgumentException;
 
-class AnthropicMessage {
+readonly class AnthropicMessage {
 
   /**
    * AnthropicMessage constructor
@@ -18,8 +18,8 @@ class AnthropicMessage {
    * @param string|array<ContentBlock> $content
    */
   public function __construct(
-    public readonly string $role,
-    public readonly string|array $content
+    public string $role,
+    public string|array $content
   ) {}
 
   /**

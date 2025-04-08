@@ -2,10 +2,10 @@
 
 namespace AiBundle\LLM\GoogleAi\Dto;
 
-class Candidate {
+readonly class Candidate {
 
   public function __construct(
-    public readonly Content $content
+    public Content $content
   ) {}
 
 }

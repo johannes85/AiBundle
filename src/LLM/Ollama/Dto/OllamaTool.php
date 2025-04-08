@@ -2,10 +2,10 @@
 
 namespace AiBundle\LLM\Ollama\Dto;
 
-class OllamaTool {
+readonly class OllamaTool {
 
   public function __construct(
-    public readonly OllamaFunction $function
+    public OllamaFunction $function
   ) {}
 
   public function getType(): string {

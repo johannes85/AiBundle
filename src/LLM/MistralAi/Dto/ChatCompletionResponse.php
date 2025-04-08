@@ -2,13 +2,13 @@
 
 namespace AiBundle\LLM\MistralAi\Dto;
 
-class ChatCompletionResponse {
+readonly class ChatCompletionResponse {
 
   /**
    * @param array<ChatCompletionChoice> $choices
    */
   public function __construct(
-    public readonly array $choices
+    public array $choices
   ) {}
 
 }

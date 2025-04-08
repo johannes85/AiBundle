@@ -2,15 +2,15 @@
 
 namespace AiBundle\LLM\GoogleAi\Dto;
 
-class Content {
+readonly class Content {
 
   /**
    * @param array<Part> $parts
    * @param string|null $role
    */
   public function __construct(
-    public readonly array $parts = [],
-    public readonly ?string $role = null,
+    public array $parts = [],
+    public ?string $role = null,
   ) {}
 
 }

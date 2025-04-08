@@ -4,7 +4,7 @@ namespace AiBundle\LLM\Anthropic\Dto;
 
 use Symfony\Component\Serializer\Attribute\SerializedName;
 
-class MessagesResponse {
+readonly class MessagesResponse {
 
   /**
    * @param array<ContentBlock> $content
@@ -17,14 +17,14 @@ class MessagesResponse {
    * @param array<mixed> $usage
    */
   public function __construct(
-    public readonly array $content,
-    public readonly string $id,
-    public readonly string $model,
-    public readonly string $role,
-    #[SerializedName('stop_reason')] public readonly string $stopReason,
-    #[SerializedName('stop_sequence')] public readonly ?string $stopSequence,
-    public readonly string $type,
-    public readonly array $usage,
+    public array $content,
+    public string $id,
+    public string $model,
+    public string $role,
+    #[SerializedName('stop_reason')] public string $stopReason,
+    #[SerializedName('stop_sequence')] public ?string $stopSequence,
+    public string $type,
+    public array $usage,
   ) {}
 
 }
