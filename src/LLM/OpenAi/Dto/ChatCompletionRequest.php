@@ -3,6 +3,7 @@
 namespace AiBundle\LLM\OpenAi\Dto;
 
 use AiBundle\LLM\GenerateOptions;
+use AiBundle\LLM\LLMException;
 use InvalidArgumentException;
 use Symfony\Component\Serializer\Attribute\SerializedName;
 
@@ -55,9 +56,13 @@ class ChatCompletionRequest {
   ): self {
     $ret = new self($model, $messages);
     if ($options !== null) {
+      if ($options->getTopK() !== null) {
+        throw new LLMException("TopK isn't supported by this LLM");
+      }
       $ret
         ->setTemperature($options->getTemperature())
-        ->setMaxCompletionTokens($options->getMaxOutputTokens());
+        ->setMaxCompletionTokens($options->getMaxOutputTokens())
+        ->setTopP($options->getTopP());
       foreach ($options->getCustomOptions() as $key => $value) {
         $method = 'set'.ucfirst(preg_replace_callback('/_(\w)/', fn($m) => strtoupper($m[1]), $key));
         if (!method_exists($ret, $method)) {

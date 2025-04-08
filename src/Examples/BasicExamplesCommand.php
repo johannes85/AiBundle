@@ -44,16 +44,20 @@ class BasicExamplesCommand extends AbstractExampleCommand {
   protected function execute(InputInterface $input, OutputInterface $output): int {
     parent::execute($input, $output);
 
-    $output->writeln(
-      $this->llm->generate(
-        (new Messages(
-          new Message(MessageRole::SYSTEM, 'You are a helpful assistant for the user: {{user_name}}', true),
-          new Message(MessageRole::HUMAN, 'What is my name?')
-        ))->processMessages(['user_name' => 'John']),
-        (new GenerateOptions())
-          ->setTemperature(0.8)
-      )->message->content
+    $res = $this->llm->generate(
+      (new Messages(
+        new Message(MessageRole::SYSTEM, 'You are a helpful assistant for the user: {{user_name}}', true),
+        new Message(MessageRole::HUMAN, 'What is my name?')
+      ))->processMessages(['user_name' => 'John']),
+      (new GenerateOptions())
+        ->setTemperature(0.8)
     );
+    $output->writeln($res->message->content);
+    $output->writeln(sprintf(
+      'Tokens usage: [input: %d] [output: %d]',
+      $res->usage->inputTokens,
+      $res->usage->outputTokens
+    ));
 
     $res =  $this->llm->generate([
       new Message(MessageRole::HUMAN, 'Tell me about Canada')

@@ -92,11 +92,10 @@ class OpenAi extends AbstractLLM {
         $openAiMessages[] = $message;
         foreach ($message->toolCalls as $toolCall) {
           $tool = $toolbox->getTool($toolCall->function->name);
-          $res = $this->toolsHelper->callTool($tool, $toolCall->function->arguments);
-
+          $toolRes = $this->toolsHelper->callTool($tool, $toolCall->function->arguments);
           $openAiMessages[] = new OpenAiMessage(
             'tool',
-            $res,
+            $toolRes,
             name: $tool->name,
             toolCallId: $toolCall->id,
           );
@@ -112,6 +111,7 @@ class OpenAi extends AbstractLLM {
 
         $finalResponse = new LLMResponse(
           new Message(MessageRole::AI, $message->content),
+          $res->usage->toLLMUsage(),
           $dataObject
         );
       }

@@ -86,11 +86,10 @@ class Ollama extends AbstractLLM {
         $ollamaMessages[] = $message;
         foreach ($message->toolCalls as $toolCall) {
           $tool = $toolbox->getTool($toolCall->function->name);
-          $res = $this->toolsHelper->callTool($tool, $toolCall->function->arguments);
-
+          $toolRes = $this->toolsHelper->callTool($tool, $toolCall->function->arguments);
           $ollamaMessages[] = new OllamaMessage(
             'tool',
-            $res
+            $toolRes
           );
         }
       } else {
@@ -104,6 +103,7 @@ class Ollama extends AbstractLLM {
 
         $finalResponse = new LLMResponse(
           $res->message->toMessage(),
+          $res->getLLMUsage(),
           $dataObject
         );
       }

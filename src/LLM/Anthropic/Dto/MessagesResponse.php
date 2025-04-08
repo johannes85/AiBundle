@@ -14,7 +14,7 @@ readonly class MessagesResponse {
    * @param string $stopReason
    * @param ?string $stopSequence
    * @param string $type
-   * @param array<mixed> $usage
+   * @param Usage $usage
    */
   public function __construct(
     public array $content,
@@ -24,7 +24,7 @@ readonly class MessagesResponse {
     #[SerializedName('stop_reason')] public string $stopReason,
     #[SerializedName('stop_sequence')] public ?string $stopSequence,
     public string $type,
-    public array $usage,
+    public Usage $usage,
   ) {}
 
 }

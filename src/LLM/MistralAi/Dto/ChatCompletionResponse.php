@@ -8,7 +8,8 @@ readonly class ChatCompletionResponse {
    * @param array<ChatCompletionChoice> $choices
    */
   public function __construct(
-    public array $choices
+    public array $choices,
+    public Usage $usage
   ) {}
 
 }

@@ -11,6 +11,9 @@ class MessagesRequest {
   private ?float $temperature = null;
   private ?string $system = null;
   #[SerializedName('tool_choice')] private ?ToolChoice $toolChoice = null;
+  #[SerializedName('top_k')] private ?int $topK = null;
+  #[SerializedName('top_p')] private ?int $topP = null;
+
 
   /**
    * @var array<AnthropicTool>|null
@@ -49,7 +52,9 @@ class MessagesRequest {
     $ret = new self($model, $messages, $maxTokens);
     if ($options !== null) {
       $ret
-        ->setTemperature($options->getTemperature());
+        ->setTemperature($options->getTemperature())
+        ->setTopK($options->getTopK())
+        ->setTopP($options->getTopP());
       foreach ($options->getCustomOptions() as $key => $value) {
         $method = 'set'.ucfirst(preg_replace_callback('/_(\w)/', fn($m) => strtoupper($m[1]), $key));
         if (!method_exists($ret, $method)) {
@@ -122,6 +127,24 @@ class MessagesRequest {
    */
   public function setTools(?array $tools): static {
     $this->tools = $tools;
+    return $this;
+  }
+
+  public function getTopK(): ?int {
+    return $this->topK;
+  }
+
+  public function setTopK(?int $topK): MessagesRequest {
+    $this->topK = $topK;
+    return $this;
+  }
+
+  public function getTopP(): ?int {
+    return $this->topP;
+  }
+
+  public function setTopP(?int $topP): MessagesRequest {
+    $this->topP = $topP;
     return $this;
   }
 

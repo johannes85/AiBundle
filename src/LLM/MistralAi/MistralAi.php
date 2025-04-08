@@ -94,11 +94,10 @@ class MistralAi extends AbstractLLM {
         $mistralAiMessages[] = $message;
         foreach ($message->toolCalls as $toolCall) {
           $tool = $toolbox->getTool($toolCall->function->name);
-          $res = $this->toolsHelper->callTool($tool, $toolCall->function->arguments);
-
+          $toolRes = $this->toolsHelper->callTool($tool, $toolCall->function->arguments);
           $mistralAiMessages[] = new MistralAiMessage(
             'tool',
-            $res,
+            $toolRes,
             name: $tool->name,
             toolCallId: $toolCall->id,
           );
@@ -114,6 +113,7 @@ class MistralAi extends AbstractLLM {
 
         $finalResponse = new LLMResponse(
           new Message(MessageRole::AI, $message->content),
+          $res->usage->toLLMUsage(),
           $dataObject
         );
       }

@@ -30,7 +30,9 @@ class GenerationConfig {
     if ($options !== null) {
       $ret
         ->setTemperature($options->getTemperature())
-        ->setMaxOutputTokens($options->getMaxOutputTokens());
+        ->setMaxOutputTokens($options->getMaxOutputTokens())
+        ->setTopK($options->getTopK())
+        ->setTopP($options->getTopP());
       foreach ($options->getCustomOptions() as $key => $value) {
         $method = 'set' . ucfirst($key);
         if (!method_exists($ret, $method)) {

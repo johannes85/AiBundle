@@ -19,8 +19,8 @@ class OllamaOptions {
   private ?string $stop = null;
   #[SerializedName('num_predict')] private ?int $numPredict = null;
   #[SerializedName('top_k')] private ?int $topK = null;
-  #[SerializedName('top_p')] private ?int $topP = null;
-  #[SerializedName('min_p')] private ?int $minP = null;
+  #[SerializedName('top_p')] private ?float $topP = null;
+  #[SerializedName('min_p')] private ?float $minP = null;
 
   /**
    * Create instance from LLM GenerateOptions
@@ -141,20 +141,20 @@ class OllamaOptions {
     return $this;
   }
 
-  public function getTopP(): ?int {
+  public function getTopP(): ?float {
     return $this->topP;
   }
 
-  public function setTopP(?int $topP): static {
+  public function setTopP(?float $topP): static {
     $this->topP = $topP;
     return $this;
   }
 
-  public function getMinP(): ?int {
+  public function getMinP(): ?float {
     return $this->minP;
   }
 
-  public function setMinP(?int $minP): static {
+  public function setMinP(?float $minP): static {
     $this->minP = $minP;
     return $this;
   }

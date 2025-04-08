@@ -5,8 +5,9 @@ namespace AiBundle\LLM;
 class GenerateOptions {
 
   private ?float $temperature = null;
-
-  public ?int $maxOutputTokens = null;
+  private ?int $maxOutputTokens = null;
+  private ?int $topK = null;
+  private ?float $topP = null;
 
   /** @var array<string, mixed> */
   private array $customOptions = [];
@@ -40,6 +41,24 @@ class GenerateOptions {
    */
   public function setMaxOutputTokens(?int $maxOutputTokens): GenerateOptions {
     $this->maxOutputTokens = $maxOutputTokens;
+    return $this;
+  }
+
+  public function getTopK(): ?int {
+    return $this->topK;
+  }
+
+  public function setTopK(?int $topK): GenerateOptions {
+    $this->topK = $topK;
+    return $this;
+  }
+
+  public function getTopP(): ?float {
+    return $this->topP;
+  }
+
+  public function setTopP(?float $topP): GenerateOptions {
+    $this->topP = $topP;
     return $this;
   }
 

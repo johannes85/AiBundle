@@ -8,7 +8,8 @@ class LLMResponse {
 
   public function __construct(
     public readonly Message $message,
-    public readonly ?object $data = null
+    public readonly LLMUsage $usage,
+    public readonly ?object $data = null,
   ) {}
 
 }

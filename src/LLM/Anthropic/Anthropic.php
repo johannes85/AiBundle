@@ -6,15 +6,15 @@ use AiBundle\Json\SchemaGenerator;
 use AiBundle\Json\SchemaGeneratorException;
 use AiBundle\LLM\AbstractLLM;
 use AiBundle\LLM\Anthropic\Dto\AnthropicMessage;
+use AiBundle\LLM\Anthropic\Dto\AnthropicTool;
 use AiBundle\LLM\Anthropic\Dto\ContentBlock;
 use AiBundle\LLM\Anthropic\Dto\ContentBlockType;
 use AiBundle\LLM\Anthropic\Dto\MessagesRequest;
 use AiBundle\LLM\Anthropic\Dto\MessagesResponse;
-use AiBundle\LLM\Anthropic\Dto\AnthropicTool;
 use AiBundle\LLM\Anthropic\Dto\ToolChoice;
 use AiBundle\LLM\Anthropic\Dto\ToolChoiceType;
 use AiBundle\LLM\GenerateOptions;
-use AiBundle\LLM\LLMDataResponse;
+use AiBundle\LLM\LLMException;
 use AiBundle\LLM\LLMResponse;
 use AiBundle\Prompting\Message;
 use AiBundle\Prompting\MessageRole;
@@ -27,7 +27,6 @@ use Symfony\Component\Serializer\Exception\ExceptionInterface as SerializerExcep
 use Symfony\Component\Serializer\Normalizer\AbstractObjectNormalizer;
 use Symfony\Component\Serializer\Serializer;
 use Symfony\Contracts\HttpClient\Exception\ExceptionInterface as HttpClientExceptionInterface;
-use AiBundle\LLM\LLMException;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 class Anthropic extends AbstractLLM {
@@ -158,13 +157,16 @@ class Anthropic extends AbstractLLM {
           } catch (SerializerExceptionInterface) {
             $dataObject = null;
           }
-          $finalResponse = new LLMDataResponse(
+
+          $finalResponse = new LLMResponse(
             new Message(MessageRole::AI, ''),
+            $res->usage->toLLMUsage(),
             $dataObject
           );
         } else {
-          $finalResponse = new LLMDataResponse(
-            new Message(MessageRole::AI, $res->content[0]->getText() ?? '')
+          $finalResponse = new LLMResponse(
+            new Message(MessageRole::AI, $res->content[0]->getText() ?? ''),
+            $res->usage->toLLMUsage()
           );
         }
       }

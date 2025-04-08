@@ -14,7 +14,6 @@ use AiBundle\LLM\GoogleAi\Dto\GenerationConfig;
 use AiBundle\LLM\GoogleAi\Dto\GoogleAiTool;
 use AiBundle\LLM\GoogleAi\Dto\InlineData;
 use AiBundle\LLM\GoogleAi\Dto\Part;
-use AiBundle\LLM\LLMDataResponse;
 use AiBundle\LLM\LLMResponse;
 use AiBundle\Prompting\FileType;
 use AiBundle\Prompting\Message;
@@ -109,6 +108,7 @@ class GoogleAi extends AbstractLLM {
 
     $finalResponse = null;
     do {
+      /** @var GoogleAiResponse $res */
       $res = $this->doRequest(
         'POST',
         'generateContent',
@@ -134,13 +134,13 @@ class GoogleAi extends AbstractLLM {
         foreach ($functionCallParts as $part) {
           $functionCall = $part->getFunctionCall();
           $tool = $toolbox->getTool($functionCall->name);
-          $res = $this->toolsHelper->callTool($tool, $functionCall->args);
+          $toolRes = $this->toolsHelper->callTool($tool, $functionCall->args);
           if (!is_array($res)) {
-            $res = ['content' => $res];
+            $toolRes = ['content' => $toolRes];
           }
           $functionResponseParts[] = (new Part())->setFunctionResponse(new FunctionResponse(
             $functionCall->name,
-            $res
+            $toolRes
           ));
         }
         $contents[] = new Content($functionResponseParts);
@@ -153,8 +153,10 @@ class GoogleAi extends AbstractLLM {
         } catch (SerializerExceptionInterface) {
           $dataObject = null;
         }
-        $finalResponse = new LLMDataResponse(
+
+        $finalResponse = new LLMResponse(
           new Message(MessageRole::AI, $responseText),
+          $res->usageMetadata->toLLMUsage(),
           $dataObject
         );
       }

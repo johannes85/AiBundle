@@ -3,6 +3,7 @@
 namespace AiBundle\LLM\MistralAi\Dto;
 
 use AiBundle\LLM\GenerateOptions;
+use AiBundle\LLM\LLMException;
 use Symfony\Component\Serializer\Attribute\SerializedName;
 use InvalidArgumentException;
 
@@ -48,6 +49,7 @@ class ChatCompletionRequest {
    * @param array<MistralAiMessage> $messages
    * @param ?GenerateOptions $options
    * @return self
+   * @throws LLMException
    */
   public static function fromGenerateOptions(
     string $model,
@@ -56,9 +58,13 @@ class ChatCompletionRequest {
   ): self {
     $ret = new self($model, $messages);
     if ($options !== null) {
+      if ($options->getTopK() !== null) {
+        throw new LLMException("TopK isn't supported by this LLM");
+      }
       $ret
         ->setTemperature($options->getTemperature())
-        ->setMaxTokens($options->getMaxOutputTokens());
+        ->setMaxTokens($options->getMaxOutputTokens())
+        ->setTopP($options->getTopP());
       foreach ($options->getCustomOptions() as $key => $value) {
         $method = 'set'.ucfirst(preg_replace_callback('/_(\w)/', fn($m) => strtoupper($m[1]), $key));
         if (!method_exists($ret, $method)) {
