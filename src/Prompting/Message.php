@@ -4,7 +4,7 @@ namespace AiBundle\Prompting;
 
 use Stringable;
 
-class Message implements Stringable {
+readonly class Message implements Stringable {
 
   /**
    * @param MessageRole $role
@@ -13,10 +13,10 @@ class Message implements Stringable {
    * @param array<File> $files
    */
   public function __construct(
-    public readonly MessageRole $role,
-    public readonly string $content,
-    private readonly bool $placeholderProcessing = false,
-    public readonly array $files = []
+    public MessageRole $role,
+    public string $content,
+    private bool $placeholderProcessing = false,
+    public array $files = []
   ) {}
 
   /**

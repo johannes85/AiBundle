@@ -10,8 +10,8 @@ use ReflectionFunction;
 use ReflectionNamedType;
 use Stringable;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
-use Symfony\Component\Serializer\Exception\UnexpectedValueException;
 use Symfony\Component\Serializer\Serializer;
+use Symfony\Component\Serializer\Exception\ExceptionInterface as SerializerExceptionInterface;
 
 class ToolsHelper {
 
@@ -64,7 +64,7 @@ class ToolsHelper {
                 $arguments[$param->getName()],
                 $paramType->getName()
               );
-            } catch (UnexpectedValueException $ex) {
+            } catch (SerializerExceptionInterface $ex) {
               throw new ToolsHelperException(
                 'Error denormalizing tool callback parameter: '.$param->getName(),
                 previous: $ex

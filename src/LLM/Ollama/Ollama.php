@@ -89,7 +89,8 @@ class Ollama extends AbstractLLM {
           $toolRes = $this->toolsHelper->callTool($tool, $toolCall->function->arguments);
           $ollamaMessages[] = new OllamaMessage(
             'tool',
-            $toolRes
+            $toolRes,
+            name: $toolCall->function->name
           );
         }
       } else {

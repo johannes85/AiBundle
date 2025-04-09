@@ -2,7 +2,7 @@
 
 namespace AiBundle\Prompting;
 
-class File {
+readonly class File {
 
   /**
    * @param FileType $type
@@ -10,9 +10,9 @@ class File {
    * @param resource $stream
    */
   public function __construct(
-    public readonly FileType $type,
-    public readonly string $mimeType,
-    private readonly mixed $stream,
+    public FileType $type,
+    public string $mimeType,
+    private mixed $stream,
   ) {}
 
   /**

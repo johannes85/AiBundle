@@ -21,7 +21,7 @@ services:
     class: AiBundle\LLM\Ollama\Ollama
     arguments:
       $endpoint: 'http://127.0.0.1:11434'
-      $model: 'llama3.1:latest'
+      $model: 'llama3.2:latest'
       $timeout: 300
 
   ai_bundle.llm.open_ai:

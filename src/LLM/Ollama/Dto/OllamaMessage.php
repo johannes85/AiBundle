@@ -21,7 +21,8 @@ readonly class OllamaMessage {
     public string $role,
     public string $content,
     public array $images = [],
-    #[SerializedName('tool_calls')] public ?array $toolCalls = null
+    #[SerializedName('tool_calls')] public ?array $toolCalls = null,
+    public ?string $name = null
   ) {}
 
   /**

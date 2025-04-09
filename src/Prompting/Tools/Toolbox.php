@@ -29,7 +29,7 @@ class Toolbox {
    * @return array<Tool>
    */
   public function getTools(): array {
-    return array_values( $this->tools);
+    return array_values($this->tools);
   }
 
 }

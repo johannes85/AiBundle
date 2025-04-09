@@ -14,15 +14,6 @@ use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 
-class Coordinates {
-  public function __construct(
-    #[Description('Latitude, for example 52.52')]
-    public readonly string $latitude,
-    #[Description('Longitude, for example 13.41')]
-    public readonly string $longitude,
-  ) {}
-}
-
 #[AsCommand('examples:tool-call')]
 class ToolCallCommand extends AbstractExampleCommand {
 
@@ -51,10 +42,13 @@ class ToolCallCommand extends AbstractExampleCommand {
           new Tool(
             'getWeather',
             'Retrieves current weather',
-            function (Coordinates $coordinates) use ($output) {
-              $output->writeln('Called tool with coordinates: '.json_encode($coordinates));
+            function (
+              #[Description('Latitude, for example 52.52')] string $latitude,
+              #[Description('Longitude, for example 13.41')] string $longitude
+            ) use ($output) {
+              $output->writeln('Called tool with coordinates: '.$latitude . ', ' . $longitude);
               return file_get_contents(
-                'https://api.open-meteo.com/v1/forecast?latitude=' . $coordinates->latitude . '&longitude=' . $coordinates->longitude . '&current=temperature,windspeed'
+                'https://api.open-meteo.com/v1/forecast?latitude=' . $latitude . '&longitude=' . $longitude . '&current=temperature,windspeed'
               );
             }
           )

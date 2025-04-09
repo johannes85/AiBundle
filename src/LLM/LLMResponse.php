@@ -4,12 +4,12 @@ namespace AiBundle\LLM;
 
 use AiBundle\Prompting\Message;
 
-class LLMResponse {
+readonly class LLMResponse {
 
   public function __construct(
-    public readonly Message $message,
-    public readonly LLMUsage $usage,
-    public readonly ?object $data = null,
+    public Message $message,
+    public LLMUsage $usage,
+    public ?object $data = null,
   ) {}
 
 }

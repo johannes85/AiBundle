@@ -2,10 +2,10 @@
 
 namespace AiBundle\Prompting;
 
-class Messages implements MessagesInterface {
+readonly class Messages implements MessagesInterface {
 
   /** @var array<Message> */
-  private readonly array $messages;
+  private array $messages;
 
   public function __construct(Message ...$messages) {
     $this->messages = $messages;
@@ -15,12 +15,7 @@ class Messages implements MessagesInterface {
    * @inheritDoc
    */
   public function processMessages(array $placeholders = []): array {
-    $ret = [];
-    foreach ($this->messages as $message) {
-      $message->applyPlaceholders($placeholders);
-      $ret[] = $message->applyPlaceholders($placeholders);
-    }
-    return $ret;
+    return array_map(fn(Message $message) => $message->applyPlaceholders($placeholders), $this->messages);
   }
 
 }
