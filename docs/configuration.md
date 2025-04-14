@@ -33,6 +33,11 @@ ai:
         model: 'gemma3:latest'
         timeout: 30 # (optional) Timeout value in seconds, default: 300
         endpoint: 'https://override.endpoint' # (optional) Allows to override the default endpoint, default: http://127.0.0.1:11434
+    deep_seek:
+      default:
+        apikey: '...'
+        model: 'deepseek-chat'
+        timeout: 30 # (optional) Timeout value in seconds, default: 300
 ```
 
 ## LLM instances

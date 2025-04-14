@@ -2,10 +2,10 @@
 
 namespace AiBundle\LLM\MistralAi\Dto;
 
+use AiBundle\LLM\LLMCapabilityException;
 use AiBundle\Prompting\FileType;
 use AiBundle\Prompting\Message;
 use AiBundle\Prompting\MessageRole;
-use InvalidArgumentException;
 use Symfony\Component\Serializer\Attribute\SerializedName;
 
 readonly class MistralAiMessage {
@@ -30,6 +30,7 @@ readonly class MistralAiMessage {
    *
    * @param Message $message
    * @return self
+   * @throws LLMCapabilityException
    */
   public static function fromMessage(Message $message): self {
     $content = [
@@ -49,7 +50,7 @@ readonly class MistralAiMessage {
         MessageRole::AI => 'assistant',
         /** @phpstan-ignore match.alwaysTrue */
         MessageRole::HUMAN => 'user',
-        default => throw new InvalidArgumentException(
+        default => throw new LLMCapabilityException(
           'OpenAi message doesn\'t support type: ' . $message->role->name
         )
       },

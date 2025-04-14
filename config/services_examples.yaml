@@ -56,3 +56,11 @@ services:
       $apiKey: '%env(string:MISTRAL_AI_APIKEY)%'
       $model: 'mistral-small-latest'
       $timeout: 300
+
+  ai_bundle.llm.deep_seek:
+    public: true
+    class: AiBundle\LLM\DeepSeek\DeepSeek
+    arguments:
+      $apiKey: '%env(string:DEEP_SEEK_APIKEY)%'
+      $model: 'deepseek-chat'
+      $timeout: 300

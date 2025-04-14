@@ -6,13 +6,14 @@ This PHP Symfony bundle allows to call LLM backends like OpenAI, Ollama etc. in 
 
 The following backends are supported:
 
-| Backend   | Text generation | Image processing | Tool calling | Info                       
-|-----------|---|---|------------|----------------------------|
-| OpenAI    | ✅ | ✅ | ✅          | https://openai.com/        |
-| Ollama    | ✅ | ✅ | ✅*1        | https://ollama.ai/         |
-| GoogleAI  | ✅ | ✅ | ✅          | https://ai.google.dev      |
-| Anthropic | ✅ | ✅ | ✅          | https://www.anthropic.com/ |
+| Backend    | Text generation | Image processing | Tool calling | Info                       
+|------------|---|---|------------|----------------------------|
+| OpenAI     | ✅ | ✅ | ✅          | https://openai.com/        |
+| Ollama     | ✅ | ✅ | ✅*1        | https://ollama.ai/         |
+| GoogleAI   | ✅ | ✅ | ✅          | https://ai.google.dev      |
+| Anthropic  | ✅ | ✅ | ✅          | https://www.anthropic.com/ |
 | Mistral AI | ✅ | ✅ | ✅          | https://mistral.ai/        |
+| DeepSeek   | ✅ | ❌ | ✅          | https://www.deepseek.com/  |
 
 The **OpenAI** endpoint URL can be changed so it is possible to access different backends with an OpenAI compatible API.
 But be aware that not all features are supported by all backends.  
@@ -160,6 +161,10 @@ ai:
     ollama:
       default:
         model: 'gemma3:latest'
+    deep_seek:
+      default:
+        apikey: '...'
+        model: 'deepseek-chat'
 ```
 
 In this example, the following services will be registered:
@@ -169,6 +174,7 @@ In this example, the following services will be registered:
 - ai_bundle.llm.mistral_ai
 - ai_bundle.llm.anthropic
 - ai_bundle.llm.ollama
+- ai_bundle.llm.deep_seek
 
 When configuring the "default" instance of a llm, in addition to the ID, the class itself (e.g. AiBundle\LLM\OpenAi\OpenAi) will be registered as a service.
 
@@ -193,6 +199,7 @@ The following values are supported:
 - google_ai
 - anthropic
 - mistral_ai
+- deep_seek
 
 Before using the examples, you have to set the api key for the corresponding backend as an environment variable:
 ```bash
@@ -200,4 +207,5 @@ export MISTRAL_AI_APIKEY=...
 export ANTHROPIC_APIKEY=...
 export GOOGLE_AI_APIKEY=...
 export OPEN_AI_APIKEY=...
+export DEEP_SEEK_APIKEY=...
 ```

@@ -2,7 +2,6 @@
 
 namespace AiBundle;
 
-use AiBundle\LLM\Ollama\Ollama;
 use Symfony\Component\Config\Definition\Configurator\DefinitionConfigurator;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Definition;
@@ -23,7 +22,8 @@ class AiBundle extends AbstractBundle {
     'google_ai' => 'AiBundle\LLM\GoogleAi\GoogleAi',
     'mistral_ai' => 'AiBundle\LLM\MistralAi\MistralAi',
     'ollama' => 'AiBundle\LLM\Ollama\Ollama',
-    'open_ai' => 'AiBundle\LLM\OpenAi\OpenAi'
+    'open_ai' => 'AiBundle\LLM\OpenAi\OpenAi',
+    'deep_seek' => 'AiBundle\LLM\DeepSeek\DeepSeek'
   ];
 
   public function configure(DefinitionConfigurator $definition): void {
@@ -73,6 +73,16 @@ class AiBundle extends AbstractBundle {
                 ->end()
               ->end()
             ->end()
+            ->arrayNode('deep_seek')->defaultValue([])
+              ->useAttributeAsKey('name')
+              ->arrayPrototype()
+                ->children()
+                  ->stringNode('apikey')->isRequired()->end()
+                  ->stringNode('model')->isRequired()->end()
+                  ->floatNode('timeout')->defaultValue(self::DEFAULT_TIMEOUT)->end()
+                ->end()
+              ->end()
+            ->end()
             ->arrayNode('ollama')->defaultValue([])
               ->useAttributeAsKey('name')
               ->arrayPrototype()
@@ -110,12 +120,13 @@ class AiBundle extends AbstractBundle {
               match ($llmType) {
                 'anthropic',
                 'google_ai',
-                'mistral_ai' => [
+                'mistral_ai',
+                'deep_seek' => [
                   '$apiKey'   => $llmParameters['apikey'],
                   '$model'    => $llmParameters['model'],
                   '$timeout'  => $llmParameters['timeout']
                 ],
-                'open_ais' => [
+                'open_ai' => [
                   '$apiKey'   => $llmParameters['apikey'],
                   '$model'    => $llmParameters['model'],
                   '$timeout'  => $llmParameters['timeout'],
@@ -131,7 +142,7 @@ class AiBundle extends AbstractBundle {
             ))->setAutowired(true)
           );
           if ($defaultConfig) {
-            $builder->setAlias(Ollama::class, $definitionId);
+            $builder->setAlias(self::LLM_CLASS_NAMES[$llmType], $definitionId);
           }
         }
       }

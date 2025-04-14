@@ -2,12 +2,10 @@
 
 namespace AiBundle\LLM\Anthropic\Dto;
 
-use AiBundle\LLM\GoogleAi\Dto\Content;
-use AiBundle\LLM\Ollama\Dto\OllamaMessage;
+use AiBundle\LLM\LLMCapabilityException;
 use AiBundle\Prompting\FileType;
 use AiBundle\Prompting\Message;
 use AiBundle\Prompting\MessageRole;
-use InvalidArgumentException;
 
 readonly class AnthropicMessage {
 
@@ -27,6 +25,7 @@ readonly class AnthropicMessage {
    *
    * @param Message $message
    * @return self
+   * @throws LLMCapabilityException
    */
   public static function fromMessage(Message $message): self {
     $content = [];
@@ -45,7 +44,7 @@ readonly class AnthropicMessage {
       match ($message->role) {
         MessageRole::AI => 'assistant',
         MessageRole::HUMAN => 'user',
-        default => throw new InvalidArgumentException(
+        default => throw new LLMCapabilityException(
           'Anthropic message doesn\'t support type: ' . $message->role->name
         )
       },
