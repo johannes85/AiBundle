@@ -15,6 +15,7 @@ use AiBundle\LLM\DeepSeek\Dto\FunctionName;
 use AiBundle\LLM\DeepSeek\Dto\ToolCall;
 use AiBundle\LLM\DeepSeek\Dto\ToolChoiceType;
 use AiBundle\LLM\GenerateOptions;
+use AiBundle\LLM\LLMCapabilityException;
 use AiBundle\LLM\LLMResponse;
 use AiBundle\LLM\LLMUsage;
 use AiBundle\Prompting\Message;
@@ -56,6 +57,11 @@ class DeepSeek extends AbstractLLM {
     ?string $responseDataType = null,
     ?Toolbox $toolbox = null
   ): LLMResponse {
+    if ($responseDataType !== null && $toolbox !== null) {
+      throw new LLMCapabilityException(
+        'Structured responses (responseDataType) and tool calling can\'t be used at the same time by this LLM'
+      );
+    }
 
     try {
       $format = $responseDataType ? $this->schemaGenerator->generateForClass($responseDataType) : null;
