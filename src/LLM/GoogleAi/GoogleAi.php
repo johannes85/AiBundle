@@ -7,6 +7,7 @@ use AiBundle\Json\SchemaGeneratorException;
 use AiBundle\LLM\AbstractLLM;
 use AiBundle\LLM\GenerateOptions;
 use AiBundle\LLM\GoogleAi\Dto\Content;
+use AiBundle\LLM\GoogleAi\Dto\FunctionCallingConfig;
 use AiBundle\LLM\GoogleAi\Dto\FunctionDeclaration;
 use AiBundle\LLM\GoogleAi\Dto\FunctionResponse;
 use AiBundle\LLM\GoogleAi\Dto\GenerateContentParameters;
@@ -14,6 +15,7 @@ use AiBundle\LLM\GoogleAi\Dto\GenerationConfig;
 use AiBundle\LLM\GoogleAi\Dto\GoogleAiTool;
 use AiBundle\LLM\GoogleAi\Dto\InlineData;
 use AiBundle\LLM\GoogleAi\Dto\Part;
+use AiBundle\LLM\GoogleAi\Dto\ToolConfig;
 use AiBundle\LLM\LLMCapabilityException;
 use AiBundle\LLM\LLMResponse;
 use AiBundle\LLM\LLMUsage;
@@ -63,10 +65,6 @@ class GoogleAi extends AbstractLLM {
     ?string $responseDataType = null,
     ?Toolbox $toolbox = null
   ): LLMResponse {
-    if ($toolbox !== null && $toolbox->toolChoice !== ToolChoice::AUTO) {
-      throw new LLMCapabilityException('Tool choices other than ToolChoice::AUTO for this LLM are work in progress.');
-    }
-
     try {
       $format = $responseDataType ? $this->schemaGenerator->generateForClass($responseDataType) : null;
     } catch (SchemaGeneratorException $ex) {
@@ -116,6 +114,7 @@ class GoogleAi extends AbstractLLM {
     $usage = LLMUsage::empty();
 
     $finalResponse = null;
+    $firstCall = true;
     do {
       $toolbox?->ensureMaxLLMCalls($usage->llmCalls + 1);
 
@@ -132,6 +131,11 @@ class GoogleAi extends AbstractLLM {
           ->setTools($toolbox !== null ? array_map(fn (Tool $tool) => new GoogleAiTool(
             [FunctionDeclaration::fromTool($tool, $this->toolsHelper)]
           ), $toolbox->getTools()) : null)
+          ->setToolConfig(
+            $toolbox !== null && $firstCall
+              ? new ToolConfig(FunctionCallingConfig::forToolbox($toolbox))
+              : null
+          )
       );
 
       /** @var Content $content */
@@ -172,6 +176,8 @@ class GoogleAi extends AbstractLLM {
           $dataObject
         );
       }
+
+      $firstCall = false;
     } while ($finalResponse === null);
 
     return $finalResponse;

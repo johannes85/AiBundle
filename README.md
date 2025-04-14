@@ -7,19 +7,18 @@ This PHP Symfony bundle allows to call LLM backends like OpenAI, Ollama etc. in 
 The following backends are supported:
 
 | Backend   | Text generation | Image processing | Tool calling | Info                       
-|-----------|---|---|--------------|----------------------------|
-| OpenAI    | ✅ | ✅ | ✅            | https://openai.com/        |
-| Ollama    | ✅ | ✅ | ✅*1          | https://ollama.ai/         |
-| GoogleAI  | ✅ | ✅ | ✅*2          | https://ai.google.dev      |
-| Anthropic | ✅ | ✅ | ✅            | https://www.anthropic.com/ |
-| Mistral AI | ✅ | ✅ | ✅            | https://mistral.ai/        |
+|-----------|---|---|------------|----------------------------|
+| OpenAI    | ✅ | ✅ | ✅          | https://openai.com/        |
+| Ollama    | ✅ | ✅ | ✅*1        | https://ollama.ai/         |
+| GoogleAI  | ✅ | ✅ | ✅          | https://ai.google.dev      |
+| Anthropic | ✅ | ✅ | ✅          | https://www.anthropic.com/ |
+| Mistral AI | ✅ | ✅ | ✅          | https://mistral.ai/        |
 
 The **OpenAI** endpoint URL can be changed so it is possible to access different backends with an OpenAI compatible API.
 But be aware that not all features are supported by all backends.  
  => [Feedack](https://github.com/johannes85/AiBundle/issues/new) regarding the compatibility of the different backends is welcome.
 
 - *1: Tool choice settings other than ToolChoice::AUTO aren't supported by Ollama.
-- *2: Tool choice settings other than ToolChoice::AUTO are work in progress and not supportet at the moment.
 
 ## Requirements
 - PHP >=8.2

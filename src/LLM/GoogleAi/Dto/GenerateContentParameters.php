@@ -7,6 +7,8 @@ class GenerateContentParameters {
   /** @var array<GoogleAiTool>|null */
   private ?array $tools = null;
 
+  private ?ToolConfig $toolConfig = null;
+
   /**
    * @param array<Content> $contents
    * @param Content|null $systemInstruction
@@ -29,7 +31,7 @@ class GenerateContentParameters {
    * @param array<Content> $contents
    * @return $this
    */
-  public function setContents(array $contents): GenerateContentParameters {
+  public function setContents(array $contents): static {
     $this->contents = $contents;
     return $this;
   }
@@ -38,7 +40,7 @@ class GenerateContentParameters {
     return $this->systemInstruction;
   }
 
-  public function setSystemInstruction(?Content $systemInstruction): GenerateContentParameters {
+  public function setSystemInstruction(?Content $systemInstruction): static {
     $this->systemInstruction = $systemInstruction;
     return $this;
   }
@@ -47,7 +49,7 @@ class GenerateContentParameters {
     return $this->generationConfig;
   }
 
-  public function setGenerationConfig(?GenerationConfig $generationConfig): GenerateContentParameters {
+  public function setGenerationConfig(?GenerationConfig $generationConfig): static {
     $this->generationConfig = $generationConfig;
     return $this;
   }
@@ -63,8 +65,17 @@ class GenerateContentParameters {
    * @param array<GoogleAiTool>|null $tools
    * @return $this
    */
-  public function setTools(?array $tools): GenerateContentParameters {
+  public function setTools(?array $tools): static {
     $this->tools = $tools;
+    return $this;
+  }
+
+  public function getToolConfig(): ?ToolConfig {
+    return $this->toolConfig;
+  }
+
+  public function setToolConfig(?ToolConfig $toolConfig): static {
+    $this->toolConfig = $toolConfig;
     return $this;
   }
 
