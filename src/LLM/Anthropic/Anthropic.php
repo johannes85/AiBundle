@@ -11,11 +11,13 @@ use AiBundle\LLM\Anthropic\Dto\ContentBlock;
 use AiBundle\LLM\Anthropic\Dto\ContentBlockType;
 use AiBundle\LLM\Anthropic\Dto\MessagesRequest;
 use AiBundle\LLM\Anthropic\Dto\MessagesResponse;
-use AiBundle\LLM\Anthropic\Dto\ToolChoice;
+use AiBundle\LLM\Anthropic\Dto\AnthropicToolChoice;
 use AiBundle\LLM\Anthropic\Dto\ToolChoiceType;
 use AiBundle\LLM\GenerateOptions;
+use AiBundle\LLM\LLMCapabilityException;
 use AiBundle\LLM\LLMException;
 use AiBundle\LLM\LLMResponse;
+use AiBundle\LLM\LLMUsage;
 use AiBundle\Prompting\Message;
 use AiBundle\Prompting\MessageRole;
 use AiBundle\Prompting\Tools\Tool;
@@ -64,7 +66,7 @@ class Anthropic extends AbstractLLM {
     ?Toolbox $toolbox = null
   ): LLMResponse {
     if ($responseDataType !== null && $toolbox !== null) {
-      throw new LLMException(
+      throw new LLMCapabilityException(
         'Structured responses (responseDataType) and tool calling can\'t be used at the same time by this LLM'
       );
     }
@@ -84,9 +86,13 @@ class Anthropic extends AbstractLLM {
       array_shift($messages);
     }
     $aMessages = array_map(fn (Message $message) => AnthropicMessage::fromMessage($message), $messages);
+    $usage = LLMUsage::empty();
 
     $finalResponse = null;
+    $firstCall = true;
     do {
+      $toolbox?->ensureMaxLLMCalls($usage->llmCalls + 1);
+
       $req = MessagesRequest::fromGenerateOptions(
         $this->model,
         $aMessages,
@@ -95,11 +101,13 @@ class Anthropic extends AbstractLLM {
       )
         ->setSystem($systemInstruction);
       if ($toolbox !== null) {
-        $req->setTools(array_map(fn (Tool $tool) => new AnthropicTool(
-          $tool->name,
-          $tool->description,
-          $this->toolsHelper->getToolCallbackSchema($tool)
-        ), $toolbox->getTools()));
+        $req
+          ->setTools(array_map(fn (Tool $tool) => new AnthropicTool(
+            $tool->name,
+            $tool->description,
+            $this->toolsHelper->getToolCallbackSchema($tool)
+          ), $toolbox->getTools()))
+          ->setToolChoice($firstCall ? AnthropicToolChoice::forToolbox($toolbox) : null);
       } elseif ($format !== null) {
         $req
           ->setTools([new AnthropicTool(
@@ -107,7 +115,7 @@ class Anthropic extends AbstractLLM {
             'Returns answer as json data',
             $format
           )])
-          ->setToolChoice(new ToolChoice(ToolChoiceType::TOOL, name: self::RETURN_DATA_TOOL_NAME));
+          ->setToolChoice(new AnthropicToolChoice(ToolChoiceType::TOOL, name: self::RETURN_DATA_TOOL_NAME));
       }
 
       /** @var MessagesResponse $res */
@@ -117,6 +125,7 @@ class Anthropic extends AbstractLLM {
         MessagesResponse::class,
         $req
       );
+      $usage = $usage->add($res->usage->toLLMUsage());
 
       $toolCalls = array_filter(
         $res->content,
@@ -160,16 +169,18 @@ class Anthropic extends AbstractLLM {
 
           $finalResponse = new LLMResponse(
             new Message(MessageRole::AI, ''),
-            $res->usage->toLLMUsage(),
+            $usage,
             $dataObject
           );
         } else {
           $finalResponse = new LLMResponse(
             new Message(MessageRole::AI, $res->content[0]->getText() ?? ''),
-            $res->usage->toLLMUsage()
+            $usage
           );
         }
       }
+
+      $firstCall = false;
     } while ($finalResponse === null);
 
     return $finalResponse;

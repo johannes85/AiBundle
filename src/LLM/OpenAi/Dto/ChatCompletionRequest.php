@@ -22,6 +22,8 @@ class ChatCompletionRequest {
   private ?bool $stream = null;
   private ?float $temperature = null;
 
+  #[SerializedName('tool_choice')] private null|OpenAiToolChoice|ToolChoiceType $toolChoice = null;
+
   /** @var array<OpenAiTool>|null */
   private ?array $tools = null;
 
@@ -193,6 +195,15 @@ class ChatCompletionRequest {
 
   public function setTemperature(?float $temperature): static {
     $this->temperature = $temperature;
+    return $this;
+  }
+
+  public function getToolChoice(): ToolChoiceType|OpenAiToolChoice|null {
+    return $this->toolChoice;
+  }
+
+  public function setToolChoice(ToolChoiceType|OpenAiToolChoice|null $toolChoice): static {
+    $this->toolChoice = $toolChoice;
     return $this;
   }
 

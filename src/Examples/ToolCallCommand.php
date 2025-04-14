@@ -9,6 +9,7 @@ use AiBundle\Prompting\Message;
 use AiBundle\Prompting\MessageRole;
 use AiBundle\Prompting\Tools\Tool;
 use AiBundle\Prompting\Tools\Toolbox;
+use AiBundle\Prompting\Tools\ToolChoice;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
@@ -28,17 +29,17 @@ class ToolCallCommand extends AbstractExampleCommand {
   protected function execute(InputInterface $input, OutputInterface $output): int {
     parent::execute($input, $output);
 
-    $output->writeln(
-      $this->llm->generate(
+    $res = $this->llm->generate(
+      [
+        new Message(
+          MessageRole::HUMAN,
+          'What is the current weather in Karlsruhe (49° 1′ N , 8° 24′ O) and Stuttgart (48° 47′ N, 9° 11′ O), Germany'
+        )
+      ],
+      (new GenerateOptions())
+        ->setTemperature(0.8),
+      toolbox: (new Toolbox(
         [
-          new Message(
-            MessageRole::HUMAN,
-            'What is the current weather in Karlsruhe (49° 1′ N , 8° 24′ O) and Stuttgart (48° 47′ N, 9° 11′ O), Germany'
-          )
-        ],
-        (new GenerateOptions())
-          ->setTemperature(0.8),
-        toolbox: new Toolbox(
           new Tool(
             'getWeather',
             'Retrieves current weather',
@@ -52,9 +53,17 @@ class ToolCallCommand extends AbstractExampleCommand {
               );
             }
           )
-        )
-      )->message->content
+        ],
+        toolChoice: ToolChoice::AUTO,
+        maxLLMCalls: 5
+      ))
     );
+
+    $output->writeln($res->message->content);
+    $output->writeln(sprintf(
+      'Completed with %d LLM calls.',
+      $res->usage->llmCalls
+    ));
 
     return Command::SUCCESS;
   }

@@ -10,7 +10,7 @@ class MessagesRequest {
 
   private ?float $temperature = null;
   private ?string $system = null;
-  #[SerializedName('tool_choice')] private ?ToolChoice $toolChoice = null;
+  #[SerializedName('tool_choice')] private ?AnthropicToolChoice $toolChoice = null;
   #[SerializedName('top_k')] private ?int $topK = null;
   #[SerializedName('top_p')] private ?float $topP = null;
 
@@ -99,17 +99,17 @@ class MessagesRequest {
   }
 
   /**
-   * @return ToolChoice|null
+   * @return AnthropicToolChoice|null
    */
-  public function getToolChoice(): ?ToolChoice {
+  public function getToolChoice(): ?AnthropicToolChoice {
     return $this->toolChoice;
   }
 
   /**
-   * @param ToolChoice|null $toolChoice
+   * @param AnthropicToolChoice|null $toolChoice
    * @return static
    */
-  public function setToolChoice(?ToolChoice $toolChoice): static {
+  public function setToolChoice(?AnthropicToolChoice $toolChoice): static {
     $this->toolChoice = $toolChoice;
     return $this;
   }
@@ -134,7 +134,7 @@ class MessagesRequest {
     return $this->topK;
   }
 
-  public function setTopK(?int $topK): MessagesRequest {
+  public function setTopK(?int $topK): static {
     $this->topK = $topK;
     return $this;
   }
@@ -143,7 +143,7 @@ class MessagesRequest {
     return $this->topP;
   }
 
-  public function setTopP(?float $topP): MessagesRequest {
+  public function setTopP(?float $topP): static {
     $this->topP = $topP;
     return $this;
   }

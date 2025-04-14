@@ -22,7 +22,8 @@ readonly class Usage {
   public function toLLMUsage(): LLMUsage {
     return new LLMUsage(
       $this->inputTokens,
-      $this->outputTokens
+      $this->outputTokens,
+      1
     );
   }
 

@@ -38,7 +38,7 @@ class GenerateChatParameters {
    * @param OllamaMessage[] $messages
    * @return $this
    */
-  public function setMessages(array $messages): GenerateChatParameters {
+  public function setMessages(array $messages): static {
     $this->messages = $messages;
     return $this;
   }
@@ -47,7 +47,7 @@ class GenerateChatParameters {
     return $this->model;
   }
 
-  public function setModel(string $model): GenerateChatParameters {
+  public function setModel(string $model): static {
     $this->model = $model;
     return $this;
   }
@@ -56,7 +56,7 @@ class GenerateChatParameters {
     return $this->stream;
   }
 
-  public function setStream(bool $stream): GenerateChatParameters {
+  public function setStream(bool $stream): static {
     $this->stream = $stream;
     return $this;
   }

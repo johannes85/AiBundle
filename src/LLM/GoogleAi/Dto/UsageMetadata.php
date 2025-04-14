@@ -20,7 +20,8 @@ readonly class UsageMetadata {
   public function toLLMUsage(): LLMUsage {
     return new LLMUsage(
       $this->promptTokenCount,
-      $this->candidatesTokenCount
+      $this->candidatesTokenCount,
+      1
     );
   }
 

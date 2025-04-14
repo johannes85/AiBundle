@@ -14,12 +14,15 @@ use AiBundle\LLM\GoogleAi\Dto\GenerationConfig;
 use AiBundle\LLM\GoogleAi\Dto\GoogleAiTool;
 use AiBundle\LLM\GoogleAi\Dto\InlineData;
 use AiBundle\LLM\GoogleAi\Dto\Part;
+use AiBundle\LLM\LLMCapabilityException;
 use AiBundle\LLM\LLMResponse;
+use AiBundle\LLM\LLMUsage;
 use AiBundle\Prompting\FileType;
 use AiBundle\Prompting\Message;
 use AiBundle\Prompting\MessageRole;
 use AiBundle\Prompting\Tools\Tool;
 use AiBundle\Prompting\Tools\Toolbox;
+use AiBundle\Prompting\Tools\ToolChoice;
 use AiBundle\Prompting\Tools\ToolsHelper;
 use SensitiveParameter;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
@@ -60,6 +63,10 @@ class GoogleAi extends AbstractLLM {
     ?string $responseDataType = null,
     ?Toolbox $toolbox = null
   ): LLMResponse {
+    if ($toolbox !== null && $toolbox->toolChoice !== ToolChoice::AUTO) {
+      throw new LLMCapabilityException('Tool choices other than ToolChoice::AUTO for this LLM are work in progress.');
+    }
+
     try {
       $format = $responseDataType ? $this->schemaGenerator->generateForClass($responseDataType) : null;
     } catch (SchemaGeneratorException $ex) {
@@ -106,8 +113,12 @@ class GoogleAi extends AbstractLLM {
       }
     }
 
+    $usage = LLMUsage::empty();
+
     $finalResponse = null;
     do {
+      $toolbox?->ensureMaxLLMCalls($usage->llmCalls + 1);
+
       /** @var GoogleAiResponse $res */
       $res = $this->doRequest(
         'POST',
@@ -125,6 +136,7 @@ class GoogleAi extends AbstractLLM {
 
       /** @var Content $content */
       $content = $res->candidates[0]->content;
+      $usage = $usage->add($res->usageMetadata->toLLMUsage());
       $functionCallParts = array_filter($content->parts, fn(Part $part) => !empty($part->getFunctionCall()));
 
       if (!empty($functionCallParts)) {
@@ -156,7 +168,7 @@ class GoogleAi extends AbstractLLM {
 
         $finalResponse = new LLMResponse(
           new Message(MessageRole::AI, $responseText),
-          $res->usageMetadata->toLLMUsage(),
+          $usage,
           $dataObject
         );
       }

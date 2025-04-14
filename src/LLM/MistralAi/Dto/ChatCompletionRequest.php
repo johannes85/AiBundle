@@ -21,10 +21,9 @@ class ChatCompletionRequest {
 
   /** @var array<MistralTool>|null  */
   private ?array $tools = null;
-  #[SerializedName('presence_penalty')] private ?float $presencePenalty = null;
 
-  /** @var array<mixed>|string|null */
-  #[SerializedName('tool_choice')] private null|array|string $toolChoice = null;
+  #[SerializedName('presence_penalty')] private ?float $presencePenalty = null;
+  #[SerializedName('tool_choice')] private null|MistralAiToolChoice|ToolChoiceType $toolChoice = null;
   #[SerializedName('frequency_penalty')] private ?float $frequencyPenalty = null;
   private ?int $n = null;
 
@@ -187,6 +186,8 @@ class ChatCompletionRequest {
     return $this;
   }
 
+
+
   public function getPresencePenalty(): ?float {
     return $this->presencePenalty;
   }
@@ -196,18 +197,11 @@ class ChatCompletionRequest {
     return $this;
   }
 
-  /**
-   * @return array<mixed>|string|null
-   */
-  public function getToolChoice(): array|string|null {
+  public function getToolChoice(): null|MistralAiToolChoice|ToolChoiceType {
     return $this->toolChoice;
   }
 
-  /**
-   * @param array<mixed>|string|null $toolChoice
-   * @return $this
-   */
-  public function setToolChoice(array|string|null $toolChoice): static {
+  public function setToolChoice(null|MistralAiToolChoice|ToolChoiceType $toolChoice): static {
     $this->toolChoice = $toolChoice;
     return $this;
   }

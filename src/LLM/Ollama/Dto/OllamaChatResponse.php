@@ -21,7 +21,8 @@ readonly class OllamaChatResponse {
   public function getLLMUsage(): LLMUsage {
     return new LLMUsage(
       $this->promptEvalCount,
-      $this->evalCount
+      $this->evalCount,
+      1
     );
   }
 

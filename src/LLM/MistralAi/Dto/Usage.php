@@ -21,7 +21,8 @@ class Usage {
   public function toLLMUsage(): LLMUsage {
     return new LLMUsage(
       $this->promptTokens,
-      $this->completionTokens
+      $this->completionTokens,
+      1
     );
   }
 

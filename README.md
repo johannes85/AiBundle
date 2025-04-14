@@ -1,18 +1,25 @@
-# PHP Symfony Ai Bundle
+# Symfony AI Bundle
 
 ![example workflow](https://github.com/johannes85/AiBundle/actions/workflows/symfony-bundle.yml/badge.svg)
 
-This PHP Symfony bundle allows to call LLM backends in a generic and simple way.
+This PHP Symfony bundle allows to call LLM backends like OpenAI, Ollama etc. in a generic and simple way.
 
 The following backends are supported:
 
-| Backend    | Text generation | Image processing | Tool calling | Info                       
-|------------|---|---|---|----------------------------|
-| OpenAI     | ✅ | ✅ | ✅ | https://openai.com/        |
-| Ollama     | ✅ | ✅ | ✅ | https://ollama.ai/         |
-| GoogleAI   | ✅ | ✅ | ✅ | https://ai.google.dev      |
-| Anthropic  | ✅ | ✅ | ✅ | https://www.anthropic.com/ |
-| Mistral AI | ✅ | ✅ | ✅ | https://mistral.ai/        |
+| Backend   | Text generation | Image processing | Tool calling | Info                       
+|-----------|---|---|--------------|----------------------------|
+| OpenAI    | ✅ | ✅ | ✅            | https://openai.com/        |
+| Ollama    | ✅ | ✅ | ✅*1          | https://ollama.ai/         |
+| GoogleAI  | ✅ | ✅ | ✅*2          | https://ai.google.dev      |
+| Anthropic | ✅ | ✅ | ✅            | https://www.anthropic.com/ |
+| Mistral AI | ✅ | ✅ | ✅            | https://mistral.ai/        |
+
+The **OpenAI** endpoint URL can be changed so it is possible to access different backends with an OpenAI compatible API.
+But be aware that not all features are supported by all backends.  
+ => [Feedack](https://github.com/johannes85/AiBundle/issues/new) regarding the compatibility of the different backends is welcome.
+
+- *1: Tool choice settings other than ToolChoice::AUTO aren't supported by Ollama.
+- *2: Tool choice settings other than ToolChoice::AUTO are work in progress and not supportet at the moment.
 
 ## Requirements
 - PHP >=8.2
@@ -51,6 +58,7 @@ See example: ```AiBundle\Examples\PersistentChatCommand```
 - PSR-6 compatible file cache: ```AiBundle\Prompting\MessageStore\Psr6CacheMessageStore```
 
 ### Support for structured responses with deserialization in an object instance:
+
 ```php
 class CountryInfo {
   public string $name;
@@ -73,7 +81,7 @@ $info = $llm->generate([
 CountryInfo#248 (3) {
   public string $name =>
   string(6) "Canada"
-  public string $capital =>
+  private string $capital =>
   string(6) "Ottawa"
   public array $languages =>
   array(2) {
@@ -85,6 +93,42 @@ CountryInfo#248 (3) {
 }
 */
 ```
+
+More information about how to define the schema of the response data type can be found in the [Schema Generator](docs/schema_generator.md) documentation.
+
+### Tool calling support
+
+```php
+$res = $this->llm->generate(
+  [
+    new Message(
+      MessageRole::HUMAN,
+      'What is the current weather in Karlsruhe (49° 1′ N , 8° 24′ O) and Stuttgart (48° 47′ N, 9° 11′ O), Germany'
+    )
+  ],
+  toolbox: new Toolbox(
+    [
+      new Tool(
+        'getWeather',
+        'Retrieves current weather',
+        function (
+          #[Description('Latitude, for example 52.52')] string $latitude,
+          #[Description('Longitude, for example 13.41')] string $longitude
+        ) use ($output) {
+          return file_get_contents(
+            'https://api.open-meteo.com/v1/forecast?latitude=' . $latitude . '&longitude=' . $longitude . '&current=temperature,windspeed'
+          );
+        }
+      )
+    ],
+    toolChoice: ToolChoice::AUTO, // Can be also ToolChoice::FORCE_TOOL_USAGE or the name of a tool to enforce usage
+    maxLLMCalls: 10 // Maximal number of LLM calls, set to a sensible value to avoid infinite loops or expensive calls. Default: 10
+  )
+)
+```
+
+More information about how to define the schema of the tool callback function be found in the [Schema Generator](docs/schema_generator.md) documentation.
+
 
 ## Usage
 
@@ -127,7 +171,7 @@ In this example, the following services will be registered:
 - ai_bundle.llm.anthropic
 - ai_bundle.llm.ollama
 
-When configuring the "default" instance of a llm, in addition to the id, the class itself (e.g. AiBundle\LLM\OpenAi\OpenAi) will be registered as a service.
+When configuring the "default" instance of a llm, in addition to the ID, the class itself (e.g. AiBundle\LLM\OpenAi\OpenAi) will be registered as a service.
 
 ### Execute standalone examples
 This bundle provides standalone examples of the features provided.

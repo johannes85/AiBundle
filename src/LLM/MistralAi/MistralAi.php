@@ -7,9 +7,11 @@ use AiBundle\Json\SchemaGeneratorException;
 use AiBundle\LLM\AbstractLLM;
 use AiBundle\LLM\GenerateOptions;
 use AiBundle\LLM\LLMResponse;
+use AiBundle\LLM\LLMUsage;
 use AiBundle\LLM\MistralAi\Dto\ChatCompletionRequest;
 use AiBundle\LLM\MistralAi\Dto\ChatCompletionResponse;
 use AiBundle\LLM\MistralAi\Dto\JsonSchema;
+use AiBundle\LLM\MistralAi\Dto\MistralAiToolChoice;
 use AiBundle\LLM\MistralAi\Dto\MistralFunction;
 use AiBundle\LLM\MistralAi\Dto\MistralTool;
 use AiBundle\LLM\MistralAi\Dto\ResponseFormat;
@@ -61,9 +63,12 @@ class MistralAi extends AbstractLLM {
     }
 
     $mistralAiMessages = array_map(fn (Message $message) => MistralAiMessage::fromMessage($message), $messages);
+    $usage = LLMUsage::empty();
 
     $finalResponse = null;
+    $firstCall = true;
     do {
+      $toolbox?->ensureMaxLLMCalls($usage->llmCalls + 1);
 
       /** @var ChatCompletionResponse $res */
       $res = $this->doRequest(
@@ -85,14 +90,25 @@ class MistralAi extends AbstractLLM {
             ), $toolbox->getTools())
             : null
           )
+          ->setToolChoice(
+            $toolbox !== null && $firstCall
+              ? MistralAiToolChoice::forToolbox($toolbox)
+              : null
+          )
       );
 
+      $usage = $usage->add($res->usage->toLLMUsage());
       $message = $res->choices[0]->message;
 
       if (!empty($message->toolCalls)) {
         $mistralAiMessages[] = $message;
         foreach ($message->toolCalls as $toolCall) {
-          $tool = $toolbox->getTool($toolCall->function->name);
+          if (($tool = $toolbox->getTool($toolCall->function->name)) === null) {
+            throw new LLMException(sprintf(
+              'Got tool call for tool %s but no such tool is registered in the toolbox.',
+              $toolCall->function->name
+            ));
+          }
           $toolRes = $this->toolsHelper->callTool($tool, $toolCall->function->arguments);
           $mistralAiMessages[] = new MistralAiMessage(
             'tool',
@@ -112,10 +128,12 @@ class MistralAi extends AbstractLLM {
 
         $finalResponse = new LLMResponse(
           new Message(MessageRole::AI, $message->content),
-          $res->usage->toLLMUsage(),
+          $usage,
           $dataObject
         );
       }
+
+      $firstCall = false;
     } while ($finalResponse === null);
 
     return $finalResponse;

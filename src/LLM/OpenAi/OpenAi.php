@@ -7,12 +7,14 @@ use AiBundle\Json\SchemaGeneratorException;
 use AiBundle\LLM\AbstractLLM;
 use AiBundle\LLM\GenerateOptions;
 use AiBundle\LLM\LLMResponse;
+use AiBundle\LLM\LLMUsage;
 use AiBundle\LLM\OpenAi\Dto\ChatCompletionRequest;
 use AiBundle\LLM\OpenAi\Dto\ChatCompletionResponse;
 use AiBundle\LLM\OpenAi\Dto\JsonSchema;
 use AiBundle\LLM\OpenAi\Dto\OpenAiFunction;
 use AiBundle\LLM\OpenAi\Dto\OpenAiMessage;
 use AiBundle\LLM\OpenAi\Dto\OpenAiTool;
+use AiBundle\LLM\OpenAi\Dto\OpenAiToolChoice;
 use AiBundle\LLM\OpenAi\Dto\ResponseFormat;
 use AiBundle\Prompting\Message;
 use AiBundle\Prompting\MessageRole;
@@ -61,9 +63,13 @@ class OpenAi extends AbstractLLM {
     }
 
     $openAiMessages = array_map(fn (Message $message) => OpenAiMessage::fromMessage($message), $messages);
+    $usage = LLMUsage::empty();
 
     $finalResponse = null;
+    $firstCall = true;
     do {
+      $toolbox?->ensureMaxLLMCalls($usage->llmCalls + 1);
+
       /** @var ChatCompletionResponse $res */
       $res = $this->doRequest(
         'POST',
@@ -84,8 +90,14 @@ class OpenAi extends AbstractLLM {
             ), $toolbox->getTools())
             : null
           )
+          ->setToolChoice(
+            $toolbox !== null && $firstCall
+              ? OpenAiToolChoice::forToolbox($toolbox)
+              : null
+          )
       );
 
+      $usage = $usage->add($res->usage->toLLMUsage());
       $message = $res->choices[0]->message;
 
       if (!empty($message->toolCalls)) {
@@ -111,10 +123,12 @@ class OpenAi extends AbstractLLM {
 
         $finalResponse = new LLMResponse(
           new Message(MessageRole::AI, $message->content),
-          $res->usage->toLLMUsage(),
+          $usage,
           $dataObject
         );
       }
+
+      $firstCall = false;
     } while ($finalResponse === null);
 
     return $finalResponse;

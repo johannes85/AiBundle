@@ -6,8 +6,10 @@ use AiBundle\Json\SchemaGenerator;
 use AiBundle\Json\SchemaGeneratorException;
 use AiBundle\LLM\AbstractLLM;
 use AiBundle\LLM\GenerateOptions;
+use AiBundle\LLM\LLMCapabilityException;
 use AiBundle\LLM\LLMException;
 use AiBundle\LLM\LLMResponse;
+use AiBundle\LLM\LLMUsage;
 use AiBundle\LLM\Ollama\Dto\GenerateChatParameters;
 use AiBundle\LLM\Ollama\Dto\OllamaChatResponse;
 use AiBundle\LLM\Ollama\Dto\OllamaFunction;
@@ -17,6 +19,7 @@ use AiBundle\LLM\Ollama\Dto\OllamaTool;
 use AiBundle\Prompting\Message;
 use AiBundle\Prompting\Tools\Tool;
 use AiBundle\Prompting\Tools\Toolbox;
+use AiBundle\Prompting\Tools\ToolChoice;
 use AiBundle\Prompting\Tools\ToolsHelper;
 use SensitiveParameter;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
@@ -47,6 +50,10 @@ class Ollama extends AbstractLLM {
     ?string $responseDataType = null,
     ?Toolbox $toolbox = null
   ): LLMResponse {
+    if ($toolbox !== null && $toolbox->toolChoice !== ToolChoice::AUTO) {
+      throw new LLMCapabilityException('No tool choices other than ToolChoice::AUTO are supported by this LLM');
+    }
+
     try {
       $format = $responseDataType ? $this->schemaGenerator->generateForClass($responseDataType) : null;
     } catch (SchemaGeneratorException $ex) {
@@ -57,9 +64,12 @@ class Ollama extends AbstractLLM {
     }
 
     $ollamaMessages = array_map(fn (Message $message) => OllamaMessage::fromMessage($message), $messages);
+    $usage = new LLMUsage(0, 0, 0);
 
     $finalResponse = null;
     do {
+      $toolbox?->ensureMaxLLMCalls($usage->llmCalls + 1);
+
       /** @var OllamaChatResponse $res */
       $res = $this->doRequest(
         'POST',
@@ -81,6 +91,7 @@ class Ollama extends AbstractLLM {
       );
 
       $message = $res->message;
+      $usage = $usage->add($res->getLLMUsage());
 
       if (!empty($message->toolCalls)) {
         $ollamaMessages[] = $message;
@@ -104,7 +115,7 @@ class Ollama extends AbstractLLM {
 
         $finalResponse = new LLMResponse(
           $res->message->toMessage(),
-          $res->getLLMUsage(),
+          $usage,
           $dataObject
         );
       }
