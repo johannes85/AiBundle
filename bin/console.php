@@ -5,6 +5,7 @@ use AiBundle\Examples\AnalyzeReceiptCommand;
 use AiBundle\Examples\BasicExamplesCommand;
 use AiBundle\Examples\DetectCars;
 use AiBundle\Examples\DetectLicencePlate;
+use AiBundle\Examples\McpCommand;
 use AiBundle\Examples\PersistentChatCommand;
 use AiBundle\Examples\SolveCaptchaCommand;
 use AiBundle\Examples\ToolCallCommand;
@@ -13,6 +14,7 @@ use Symfony\Component\Config\FileLocator;
 use Symfony\Component\Console\Application;
 use Symfony\Component\Console\Logger\ConsoleLogger;
 use Symfony\Component\Console\Output\ConsoleOutput;
+use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Loader\YamlFileLoader;
 
@@ -21,7 +23,7 @@ require_once(__DIR__ . '/../vendor/autoload.php');
 $container = new ContainerBuilder();
 $container->register(LoggerInterface::class)
   ->setClass(ConsoleLogger::class)
-  ->setArgument('$output', new ConsoleOutput());
+  ->setArgument('$output', new ConsoleOutput(OutputInterface::VERBOSITY_DEBUG));
 $loader = new YamlFileLoader($container, new FileLocator(__DIR__ . '/../config'));
 $loader->load('services.yaml');
 $loader->load('services_examples.yaml');
@@ -35,6 +37,7 @@ $app->addCommands([
   $container->get(DetectLicencePlate::class),
   $container->get(BasicExamplesCommand::class),
   $container->get(DetectCars::class),
-  $container->get(ToolCallCommand::class)
+  $container->get(ToolCallCommand::class),
+  $container->get(McpCommand::class)
 ]);
 $app->run();

@@ -21,7 +21,7 @@ services:
     class: AiBundle\LLM\Ollama\Ollama
     arguments:
       $endpoint: 'http://127.0.0.1:11434'
-      $model: 'llama3.2:latest'
+      $model: 'gemma3:12b'
       $timeout: 300
 
   ai_bundle.llm.open_ai:
@@ -55,12 +55,4 @@ services:
     arguments:
       $apiKey: '%env(string:MISTRAL_AI_APIKEY)%'
       $model: 'mistral-small-latest'
-      $timeout: 300
-
-  ai_bundle.llm.deep_seek:
-    public: true
-    class: AiBundle\LLM\DeepSeek\DeepSeek
-    arguments:
-      $apiKey: '%env(string:DEEP_SEEK_APIKEY)%'
-      $model: 'deepseek-chat'
       $timeout: 300

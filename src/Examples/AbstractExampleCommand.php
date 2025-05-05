@@ -16,7 +16,7 @@ abstract class AbstractExampleCommand extends Command {
   protected AbstractLLM $llm;
 
   public function __construct(
-    #[Autowire('@service_container')] private readonly Container $container
+    #[Autowire('@service_container')] protected readonly Container $container
   ) {
     parent::__construct();
   }
