@@ -34,6 +34,7 @@
         "symfony/http-client": "^7.0",
         "phpdocumentor/reflection-docblock": "^5.2",
         "symfony/property-access": "^7.0",
-        "symfony/uid": "^7.0"
+        "symfony/uid": "^7.0",
+        "symfony/process": "^7.2"
     }
 }

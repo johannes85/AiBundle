@@ -3,8 +3,9 @@
 
 use AiBundle\Examples\AnalyzeReceiptCommand;
 use AiBundle\Examples\BasicExamplesCommand;
-use AiBundle\Examples\DetectCars;
+use AiBundle\Examples\CatFlap;use AiBundle\Examples\DetectCars;
 use AiBundle\Examples\DetectLicencePlate;
+use AiBundle\Examples\McpCommand;
 use AiBundle\Examples\PersistentChatCommand;
 use AiBundle\Examples\SolveCaptchaCommand;
 use AiBundle\Examples\ToolCallCommand;
@@ -35,6 +36,7 @@ $app->addCommands([
   $container->get(DetectLicencePlate::class),
   $container->get(BasicExamplesCommand::class),
   $container->get(DetectCars::class),
-  $container->get(ToolCallCommand::class)
+  $container->get(ToolCallCommand::class),
+  $container->get(McpCommand::class)
 ]);
 $app->run();
