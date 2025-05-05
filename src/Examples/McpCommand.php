@@ -13,6 +13,7 @@ use AiBundle\Prompting\MessageRole;
 use AiBundle\Prompting\Tools\Tool;
 use AiBundle\Prompting\Tools\Toolbox;
 use AiBundle\Prompting\Tools\ToolChoice;
+use Psr\Log\LoggerInterface;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
@@ -25,7 +26,8 @@ use Symfony\Component\Serializer\Serializer;
 class McpCommand extends Command {
 
   public function __construct(
-    #[Autowire('@ai_bundle.rest.serializer')] private Serializer $serializer
+    #[Autowire('@ai_bundle.rest.serializer')] private Serializer $serializer,
+    private LoggerInterface $log
   ) {
     parent::__construct();
   }
@@ -49,7 +51,8 @@ class McpCommand extends Command {
         '-i',
         'mcp/everything'
       ],
-      $this->serializer
+      $this->serializer,
+      $this->log
     );
     $mcp = new MCPClient(
       $transport,

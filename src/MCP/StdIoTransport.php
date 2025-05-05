@@ -4,6 +4,8 @@ namespace AiBundle\MCP;
 
 use AiBundle\MCP\Dto\JsonRpcRequest;
 use AiBundle\MCP\Dto\JsonRpcResponse;
+use Psr\Log\LoggerInterface;
+use Symfony\Component\Process\Exception\ExceptionInterface as ProcessExceptionInterface;
 use Symfony\Component\Process\InputStream;
 use Symfony\Component\Process\Process;
 use Symfony\Component\Serializer\Serializer;
@@ -18,6 +20,8 @@ class StdIoTransport implements TransportInterface {
     '2024-11-05'
   ];
 
+  private const DEFAULT_STOP_SIGNAL = SIGINT;
+
   /** @var ?Process */
   private ?Process $process = null;
 
@@ -26,6 +30,7 @@ class StdIoTransport implements TransportInterface {
   public function __construct(
     private readonly array $command,
     private readonly Serializer $serializer,
+    private LoggerInterface $log,
     private readonly int $responseTimeout = 20,
     private readonly int $initTimeout = 10,
     private readonly int $initTrys = 3
@@ -35,10 +40,16 @@ class StdIoTransport implements TransportInterface {
     $this->disconnect();
   }
 
+  /**
+   * @inheritDoc
+   */
   public function isConnected(): bool {
     return $this->process && $this->process->isRunning();
   }
 
+  /**
+   * @inheritDoc
+   */
   public function connect(): void {
     if (!$this->isConnected()) {
       $this->process = new Process($this->command);
@@ -50,6 +61,7 @@ class StdIoTransport implements TransportInterface {
       do {
         $initCount++;
         try {
+          $this->log->debug('Sending initialize request');
           $res = $this->executeRequest(new JsonRpcRequest(
             'initialize',
             [
@@ -61,6 +73,9 @@ class StdIoTransport implements TransportInterface {
               ]
             ]
           ), $this->initTimeout);
+          $this->log->debug('Got response', [
+            'response' => $res
+          ]);
         } catch (MCPTransportTimeoutException) { }
       } while ($res === null && $initCount < $this->initTrys);
       if ($res === null) {
@@ -77,6 +92,17 @@ class StdIoTransport implements TransportInterface {
     }
   }
 
+  /**
+   * Execute a JSON-RPC request and return the response.
+   *
+   * @param JsonRpcRequest $request
+   * @param int|null $timeout
+   * @return JsonRpcResponse|null
+   * @throws MCPException
+   * @throws MCPTransportException
+   * @throws MCPTransportTimeoutException
+   * @throws ProcessExceptionInterface
+   */
   public function executeRequest(JsonRpcRequest $request, ?int $timeout = null): ?JsonRpcResponse {
     if (!$this->process || !$this->process->isRunning()) {
       throw new MCPTransportException('Process is not running.');
@@ -92,9 +118,13 @@ class StdIoTransport implements TransportInterface {
         Uuid::v4()->toRfc4122()
       );
     }
-    $message = $this->serializer->serialize($request, 'json', [
-      "json_encode_options" => JSON_FORCE_OBJECT
-    ])."\n";
+    try {
+      $message = $this->serializer->serialize($request, 'json', [
+        "json_encode_options" => JSON_FORCE_OBJECT
+      ])."\n";
+    } catch (SerializerExceptionInterface $ex) {
+      throw new MCPException('Failed to serialize json rpc request', previous: $ex);
+    }
     $this->input->write($message);
 
     $buffer = "";
@@ -103,7 +133,8 @@ class StdIoTransport implements TransportInterface {
       if ($time + $timeout < time()) {
         throw new MCPTransportTimeoutException('Timeout while waiting for response');
       }
-      if (($b = $this->process->getIncrementalOutput()) !== '') {
+      if (($b = $this->process->getOutput()) !== '') {
+        $this->process->clearOutput();
         $buffer .= $b;
         while (($nlPos = strpos($buffer, "\n")) !== false) {
           $line = substr($buffer, 0, $nlPos);
@@ -125,19 +156,24 @@ class StdIoTransport implements TransportInterface {
               }
               return $rpcMessage;
             }
+          } else {
+            $this->log->debug(sprintf('Ignoring line: %s', $line));
           }
         }
       }
     } while(true);
   }
 
+  /**
+   * @inheritDoc
+   */
   public function disconnect(): void {
     if ($this->input !== null) {
       $this->input->close();
       $this->input = null;
     }
     if ($this->process !== null) {
-      $this->process->stop();
+      $this->process->stop(signal: self::DEFAULT_STOP_SIGNAL);
       $this->process = null;
     }
   }

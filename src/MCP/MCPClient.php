@@ -52,7 +52,7 @@ class MCPClient {
    *
    * @param JsonRpcRequest $request
    * @param string $responseDataType
-   * @return object|null
+   * @return object
    * @throws MCPException
    */
   private function executeRequest(JsonRpcRequest $request, string $responseDataType): object {
