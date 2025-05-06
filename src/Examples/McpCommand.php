@@ -6,7 +6,7 @@ use AiBundle\Json\Attributes\Description;
 use AiBundle\LLM\GenerateOptions;
 use AiBundle\LLM\LLMException;
 use AiBundle\MCP\Dto\JsonRpcRequest;
-use AiBundle\MCP\MCPClient;
+use AiBundle\MCP\MCPServer;
 use AiBundle\MCP\StdIoTransport;
 use AiBundle\Prompting\Message;
 use AiBundle\Prompting\MessageRole;
@@ -26,7 +26,7 @@ use Symfony\Component\Serializer\Serializer;
 class McpCommand extends Command {
 
   public function __construct(
-    #[Autowire('@ai_bundle.rest.serializer')] private Serializer $serializer,
+    #[Autowire('@ai_bundle.mcp.example_everything')] private MCPServer $mcp,
     private LoggerInterface $log
   ) {
     parent::__construct();
@@ -43,29 +43,13 @@ class McpCommand extends Command {
    */
   protected function execute(InputInterface $input, OutputInterface $output): int {
 
-    $transport = new StdIoTransport(
-      [
-        'docker',
-        'run',
-        '--rm',
-        '-i',
-        'mcp/everything'
-      ],
-      $this->serializer,
-      $this->log
-    );
-    $mcp = new MCPClient(
-      $transport,
-      $this->serializer
-    );
-
-    //dd($mcp->getTools());
+    #dd($this->mcp->getToolInstances());
     #dd($mcp->callTool('printEnv'));
     $output->writeln('1');
-    print_r($mcp->callTool('add', ['a' => 1, 'b' => 2]));
+    print_r($this->mcp->callTool('add', ['a' => 1, 'b' => 2]));
 
     $output->writeln('2');
-    print_r($mcp->callTool('add', ['a' => 1, 'b' => 2]));
+    print_r($this->mcp->callTool('add', ['a' => 1, 'b' => 2]));
 
     return Command::SUCCESS;
   }

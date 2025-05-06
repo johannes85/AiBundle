@@ -5,6 +5,7 @@ namespace AiBundle\MCP;
 use AiBundle\MCP\Dto\JsonRpcRequest;
 use AiBundle\MCP\Dto\JsonRpcResponse;
 use Psr\Log\LoggerInterface;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\Process\Exception\ExceptionInterface as ProcessExceptionInterface;
 use Symfony\Component\Process\InputStream;
 use Symfony\Component\Process\Process;
@@ -29,7 +30,7 @@ class StdIoTransport implements TransportInterface {
 
   public function __construct(
     private readonly array $command,
-    private readonly Serializer $serializer,
+    #[Autowire('@ai_bundle.rest.serializer')] private readonly Serializer $serializer,
     private LoggerInterface $log,
     private readonly int $responseTimeout = 20,
     private readonly int $initTimeout = 10,

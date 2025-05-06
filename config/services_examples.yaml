@@ -56,3 +56,13 @@ services:
       $apiKey: '%env(string:MISTRAL_AI_APIKEY)%'
       $model: 'mistral-small-latest'
       $timeout: 300
+
+  ai_bundle.mcp.example_everything.transport:
+    class: AiBundle\MCP\StdIoTransport
+    arguments:
+      $command: ['docker', 'run', '--rm','-i', 'mcp/everything']
+
+  ai_bundle.mcp.example_everything:
+    class: AiBundle\MCP\MCPServer
+    arguments:
+      $transport: '@ai_bundle.mcp.example_everything.transport'

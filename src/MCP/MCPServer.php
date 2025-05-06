@@ -6,14 +6,16 @@ use AiBundle\MCP\Dto\JsonRpcRequest;
 use AiBundle\MCP\Dto\ToolsList;
 use AiBundle\MCP\Model\ToolResponse;
 use AiBundle\MCP\Model\MCPTool;
+use AiBundle\Prompting\Tools\Tool;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\Serializer\Serializer;
 use Symfony\Component\Serializer\Exception\ExceptionInterface as SerializerExceptionInterface;
 
-class MCPClient {
+class MCPServer {
 
   public function __construct(
     private TransportInterface $transport,
-    private Serializer $serializer
+    #[Autowire('@ai_bundle.rest.serializer')] private Serializer $serializer
   ) { }
 
   /**
