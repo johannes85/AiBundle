@@ -4,13 +4,12 @@ namespace AiBundle\Prompting\Tools;
 
 use Closure;
 
-class Tool {
+readonly class Tool {
 
   public function __construct(
-    public readonly string $name,
-    public readonly string $description,
-    public readonly Closure $callback,
-    public readonly bool $autoBackfeed = false
+    public string $name,
+    public string $description,
+    public Closure $callback
   ) {}
 
 }
