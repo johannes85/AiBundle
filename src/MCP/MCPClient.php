@@ -19,13 +19,13 @@ class MCPClient {
   /**
    * Returns list of tools supported by the server
    *
-   * @return array<MCPTool>|null
+   * @return array<MCPTool>
    * @throws MCPException
    */
-  public function getTools(): ?array {
+  public function getTools(): array {
     return $this->executeRequest(new JsonRpcRequest(
       'tools/list'
-    ), ToolsList::class)?->tools;
+    ), ToolsList::class)->tools;
   }
 
   /**

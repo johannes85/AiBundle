@@ -97,13 +97,13 @@ class StdIoTransport implements TransportInterface {
    *
    * @param JsonRpcRequest $request
    * @param int|null $timeout
-   * @return JsonRpcResponse|null
+   * @return JsonRpcResponse
    * @throws MCPException
    * @throws MCPTransportException
    * @throws MCPTransportTimeoutException
    * @throws ProcessExceptionInterface
    */
-  public function executeRequest(JsonRpcRequest $request, ?int $timeout = null): ?JsonRpcResponse {
+  public function executeRequest(JsonRpcRequest $request, ?int $timeout = null): JsonRpcResponse {
     if (!$this->process || !$this->process->isRunning()) {
       throw new MCPTransportException('Process is not running.');
     }

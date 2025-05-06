@@ -25,9 +25,9 @@ interface TransportInterface {
    * Execute a JSON-RPC request and return the response.
    *
    * @param JsonRpcRequest $request
-   * @return JsonRpcResponse|null
+   * @return JsonRpcResponse
    */
-  public function executeRequest(JsonRpcRequest $request): ?JsonRpcResponse;
+  public function executeRequest(JsonRpcRequest $request): JsonRpcResponse;
 
   /**
    * Disconnects transport
