@@ -18,10 +18,9 @@ use AiBundle\LLM\OpenAi\Dto\OpenAiToolChoice;
 use AiBundle\LLM\OpenAi\Dto\ResponseFormat;
 use AiBundle\Prompting\Message;
 use AiBundle\Prompting\MessageRole;
-use AiBundle\Prompting\Tools\Tool;
+use AiBundle\Prompting\Tools\AbstractTool;
 use AiBundle\Prompting\Tools\Toolbox;
 use AiBundle\Prompting\Tools\ToolsHelper;
-use AiBundle\Prompting\Tools\ToolsHelperException;
 use SensitiveParameter;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\Serializer\Exception\ExceptionInterface as SerializerExceptionInterface;
@@ -39,7 +38,7 @@ class OpenAi extends AbstractLLM {
     private readonly string $endpoint,
     private readonly float $timeout,
     #[Autowire('@ai_bundle.rest.http_client')] private readonly HttpClientInterface $httpClient,
-    #[Autowire('@ai_bundle.rest.serializer')] private readonly Serializer $serializer,
+    #[Autowire('@ai_bundle.serializer')] private readonly Serializer $serializer,
     private readonly SchemaGenerator $schemaGenerator,
     private readonly ToolsHelper $toolsHelper,
   ) {}
@@ -85,7 +84,7 @@ class OpenAi extends AbstractLLM {
             new JsonSchema('response', $format)
           ) : null)
           ->setTools($toolbox !== null
-            ? array_map(fn (Tool $tool) => new OpenAiTool(
+            ? array_map(fn (AbstractTool $tool) => new OpenAiTool(
               OpenAiFunction::fromTool($tool, $this->toolsHelper)
             ), $toolbox->getTools())
             : null
@@ -161,7 +160,8 @@ class OpenAi extends AbstractLLM {
       if ($payload !== null) {
         try {
           $options['json'] = $this->serializer->normalize($payload, 'json', [
-            AbstractObjectNormalizer::SKIP_NULL_VALUES => true
+            AbstractObjectNormalizer::SKIP_NULL_VALUES => true,
+            AbstractObjectNormalizer::PRESERVE_EMPTY_OBJECTS => true
           ]);
         } catch (SerializerExceptionInterface $ex) {
           throw new LLMException(

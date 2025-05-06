@@ -3,17 +3,18 @@
 namespace AiBundle\MCP;
 
 use AiBundle\MCP\Dto\JsonRpcRequest;
+use AiBundle\MCP\Dto\ToolDefinition;
 use AiBundle\MCP\Dto\ToolsList;
 use AiBundle\MCP\Model\ToolResponse;
-use AiBundle\MCP\Model\MCPTool;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\Serializer\Serializer;
 use Symfony\Component\Serializer\Exception\ExceptionInterface as SerializerExceptionInterface;
 
-class MCPClient {
+class MCPServer {
 
   public function __construct(
     private TransportInterface $transport,
-    private Serializer $serializer
+    #[Autowire('@ai_bundle.serializer')] private Serializer $serializer
   ) { }
 
   /**
@@ -23,9 +24,13 @@ class MCPClient {
    * @throws MCPException
    */
   public function getTools(): array {
-    return $this->executeRequest(new JsonRpcRequest(
+    $toolDefinitions = $this->executeRequest(new JsonRpcRequest(
       'tools/list'
     ), ToolsList::class)->tools;
+    return array_map(
+      fn (ToolDefinition $toolDefinition) => MCPTool::fromToolDefinition($toolDefinition, $this),
+      $toolDefinitions
+    );
   }
 
   /**
@@ -56,9 +61,6 @@ class MCPClient {
    * @throws MCPException
    */
   private function executeRequest(JsonRpcRequest $request, string $responseDataType): object {
-    if (!$this->transport->isConnected()) {
-      $this->transport->connect();
-    }
     $res = $this->transport->executeRequest($request);
     try {
       return $this->serializer->denormalize($res->result, $responseDataType);

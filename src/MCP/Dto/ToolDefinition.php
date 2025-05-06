@@ -1,8 +1,8 @@
 <?php
 
-namespace AiBundle\MCP\Model;
+namespace AiBundle\MCP\Dto;
 
-readonly class MCPTool {
+readonly class ToolDefinition {
 
   /**
    * @param string $name

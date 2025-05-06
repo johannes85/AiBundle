@@ -7,7 +7,7 @@ use AiBundle\LLM\GenerateOptions;
 use AiBundle\LLM\LLMException;
 use AiBundle\Prompting\Message;
 use AiBundle\Prompting\MessageRole;
-use AiBundle\Prompting\Tools\Tool;
+use AiBundle\Prompting\Tools\CallbackTool;
 use AiBundle\Prompting\Tools\Toolbox;
 use AiBundle\Prompting\Tools\ToolChoice;
 use Symfony\Component\Console\Attribute\AsCommand;
@@ -40,7 +40,7 @@ class ToolCallCommand extends AbstractExampleCommand {
         ->setTemperature(0.8),
       toolbox: (new Toolbox(
         [
-          new Tool(
+          new CallbackTool(
             'getWeather',
             'Retrieves current weather',
             function (

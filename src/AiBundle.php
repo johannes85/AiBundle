@@ -6,6 +6,7 @@ use Symfony\Component\Config\Definition\Configurator\DefinitionConfigurator;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Definition;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
+use Symfony\Component\DependencyInjection\Reference;
 use Symfony\Component\HttpKernel\Bundle\AbstractBundle;
 use InvalidArgumentException;
 
@@ -16,6 +17,7 @@ class AiBundle extends AbstractBundle {
   private const DEFAULT_TIMEOUT = 300;
   private const DEFAULT_LLM_CONFIG_NAME = 'default';
   private const LLM_DEFINITION_PREFIX = 'ai_bundle.llm.';
+  private const MCP_SERVER_DEFINITION_PREFIX = 'ai_bundle.mcp_server.';
 
   private const LLM_CLASS_NAMES = [
     'anthropic' => 'AiBundle\LLM\Anthropic\Anthropic',
@@ -95,6 +97,30 @@ class AiBundle extends AbstractBundle {
             ->end()
           ->end()
         ->end()
+        ->arrayNode('mcp_servers')->canBeUnset()
+          ->useAttributeAsKey('name')
+          ->arrayPrototype()
+            ->children()
+              ->arrayNode('stdio_transport')
+                ->children()
+                  ->arrayNode('command')->isRequired()->stringPrototype()->end()->end()
+                  ->stringNode('stop_signal')->defaultValue('SIGINT')->end()
+                  ->integerNode('response_timeout')->defaultValue(20)->end()
+                ->end()
+              ->end()
+              ->arrayNode('streamable_http_transport')
+                ->children()
+                  ->stringNode('endpoint')->isRequired()->end()
+                  ->arrayNode('headers')
+                    ->stringPrototype()->end()
+                    ->defaultValue([])
+                  ->end()
+                  ->floatNode('timeout')->defaultValue(30)->end()
+                ->end()
+              ->end()
+            ->end()
+          ->end()
+        ->end()
       ->end();
   }
 
@@ -145,6 +171,43 @@ class AiBundle extends AbstractBundle {
             $builder->setAlias(self::LLM_CLASS_NAMES[$llmType], $definitionId);
           }
         }
+      }
+    }
+
+    if (isset($config['mcp_servers'])) {
+      foreach ($config['mcp_servers'] as $serverName => $serverConfig) {
+        $transportDefinitionId = self::MCP_SERVER_DEFINITION_PREFIX.$serverName.'.transport';
+
+        $builder->setDefinition(
+          $transportDefinitionId,
+          match (true) {
+            isset($serverConfig['stdio_transport']) => (new Definition(
+              'AiBundle\MCP\StdIoTransport',
+              [
+                '$command' => $serverConfig['stdio_transport']['command'],
+                '$stopSignal' => constant($serverConfig['stdio_transport']['stop_signal']),
+                '$responseTimeout' => $serverConfig['stdio_transport']['response_timeout']
+              ]
+            ))->setAutowired(true),
+            isset($serverConfig['streamable_http_transport']) => (new Definition(
+              'AiBundle\MCP\StreamableHttpTransport',
+              [
+                '$endpoint' => $serverConfig['streamable_http_transport']['endpoint'],
+                '$headers' => $serverConfig['streamable_http_transport']['headers'],
+                '$timeout' => $serverConfig['streamable_http_transport']['timeout']
+              ]
+            ))->setAutowired(true)
+          }
+        );
+        $builder->setDefinition(
+          self::MCP_SERVER_DEFINITION_PREFIX.$serverName,
+          (new Definition(
+            'AiBundle\MCP\MCPServer',
+            [
+              '$transport' => new Reference($transportDefinitionId),
+            ]
+          ))->setAutowired(true)
+        );
       }
     }
       

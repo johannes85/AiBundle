@@ -5,7 +5,10 @@ namespace AiBundle\MCP;
 use AiBundle\MCP\Dto\JsonRpcRequest;
 use AiBundle\MCP\Dto\JsonRpcResponse;
 use Psr\Log\LoggerInterface;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\Process\Exception\ExceptionInterface as ProcessExceptionInterface;
+use Symfony\Component\Process\Exception\ProcessStartFailedException;
+use Symfony\Component\Process\Exception\RuntimeException;
 use Symfony\Component\Process\InputStream;
 use Symfony\Component\Process\Process;
 use Symfony\Component\Serializer\Serializer;
@@ -27,13 +30,23 @@ class StdIoTransport implements TransportInterface {
 
   private ?InputStream $input = null;
 
+  /**
+   * @param array<string> $command
+   * @param Serializer $serializer
+   * @param LoggerInterface $log
+   * @param int $responseTimeout
+   * @param int $initTimeout
+   * @param int $initTrys
+   * @param int $stopSignal
+   */
   public function __construct(
     private readonly array $command,
-    private readonly Serializer $serializer,
+    #[Autowire('@ai_bundle.serializer')] private readonly Serializer $serializer,
     private LoggerInterface $log,
     private readonly int $responseTimeout = 20,
     private readonly int $initTimeout = 10,
-    private readonly int $initTrys = 3
+    private readonly int $initTrys = 3,
+    private readonly int $stopSignal = self::DEFAULT_STOP_SIGNAL
   ) {}
 
   public function __destruct() {
@@ -41,14 +54,23 @@ class StdIoTransport implements TransportInterface {
   }
 
   /**
-   * @inheritDoc
+   * Returns whether the process is currently running
+   *
+   * @return bool
    */
-  public function isConnected(): bool {
+  private function isConnected(): bool {
     return $this->process && $this->process->isRunning();
   }
 
   /**
-   * @inheritDoc
+   * Opens the process and sends an initialize request.
+   *
+   * @return void
+   * @throws MCPException
+   * @throws MCPTransportException
+   * @throws ProcessExceptionInterface
+   * @throws ProcessStartFailedException
+   * @throws RuntimeException
    */
   public function connect(): void {
     if (!$this->isConnected()) {
@@ -104,6 +126,9 @@ class StdIoTransport implements TransportInterface {
    * @throws ProcessExceptionInterface
    */
   public function executeRequest(JsonRpcRequest $request, ?int $timeout = null): JsonRpcResponse {
+    if (!$this->isConnected()) {
+      $this->connect();
+    }
     if (!$this->process || !$this->process->isRunning()) {
       throw new MCPTransportException('Process is not running.');
     }
@@ -120,7 +145,7 @@ class StdIoTransport implements TransportInterface {
     }
     try {
       $message = $this->serializer->serialize($request, 'json', [
-        "json_encode_options" => JSON_FORCE_OBJECT
+        Serializer::EMPTY_ARRAY_AS_OBJECT => true
       ])."\n";
     } catch (SerializerExceptionInterface $ex) {
       throw new MCPException('Failed to serialize json rpc request', previous: $ex);
@@ -165,15 +190,17 @@ class StdIoTransport implements TransportInterface {
   }
 
   /**
-   * @inheritDoc
+   * Ends process and closes input stream.
+   *
+   * @return void
    */
-  public function disconnect(): void {
+  private function disconnect(): void {
     if ($this->input !== null) {
       $this->input->close();
       $this->input = null;
     }
     if ($this->process !== null) {
-      $this->process->stop(signal: self::DEFAULT_STOP_SIGNAL);
+      $this->process->stop(signal: $this->stopSignal);
       $this->process = null;
     }
   }

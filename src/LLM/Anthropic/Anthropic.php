@@ -20,9 +20,10 @@ use AiBundle\LLM\LLMResponse;
 use AiBundle\LLM\LLMUsage;
 use AiBundle\Prompting\Message;
 use AiBundle\Prompting\MessageRole;
-use AiBundle\Prompting\Tools\Tool;
+use AiBundle\Prompting\Tools\AbstractTool;
 use AiBundle\Prompting\Tools\Toolbox;
 use AiBundle\Prompting\Tools\ToolsHelper;
+use AiBundle\Serializer\EmptyObjectHelper;
 use SensitiveParameter;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\Serializer\Exception\ExceptionInterface as SerializerExceptionInterface;
@@ -39,6 +40,8 @@ class Anthropic extends AbstractLLM {
   private const RETURN_DATA_TOOL_NAME = 'return-json-data';
 
   private const MAX_TOKENS_DEFAULT = [
+    'claude-opus-4-0' => 8192,
+    'claude-sonnet-4-0' => 8192,
     'claude-3-7-sonnet' => 8192,
     'claude-3-5-haiku' => 8192,
     'claude-3-opus' => 4096,
@@ -51,7 +54,7 @@ class Anthropic extends AbstractLLM {
     private readonly string $model,
     private readonly float $timeout,
     #[Autowire('@ai_bundle.rest.http_client')] private readonly HttpClientInterface $httpClient,
-    #[Autowire('@ai_bundle.rest.serializer')] private readonly Serializer $serializer,
+    #[Autowire('@ai_bundle.serializer')] private readonly Serializer $serializer,
     private readonly SchemaGenerator $schemaGenerator,
     private readonly ToolsHelper $toolsHelper
   ) {}
@@ -102,10 +105,10 @@ class Anthropic extends AbstractLLM {
         ->setSystem($systemInstruction);
       if ($toolbox !== null) {
         $req
-          ->setTools(array_map(fn (Tool $tool) => new AnthropicTool(
+          ->setTools(array_map(fn (AbstractTool $tool) => new AnthropicTool(
             $tool->name,
             $tool->description,
-            $this->toolsHelper->getToolCallbackSchema($tool)
+            EmptyObjectHelper::injectEmptyObjects($this->toolsHelper->getToolCallbackSchema($tool))
           ), $toolbox->getTools()))
           ->setToolChoice($firstCall ? AnthropicToolChoice::forToolbox($toolbox) : null);
       } elseif ($format !== null) {
@@ -174,7 +177,10 @@ class Anthropic extends AbstractLLM {
           );
         } else {
           $finalResponse = new LLMResponse(
-            new Message(MessageRole::AI, $res->content[0]->getText() ?? ''),
+            new Message(
+            MessageRole::AI,
+            count($res->content) > 0 ? ($res->content[0]->getText() ?? '') : ''
+            ),
             $usage
           );
         }
@@ -229,7 +235,8 @@ class Anthropic extends AbstractLLM {
       if ($payload !== null) {
         try {
           $options['json'] = $this->serializer->normalize($payload, 'json', [
-            AbstractObjectNormalizer::SKIP_NULL_VALUES => true
+            AbstractObjectNormalizer::SKIP_NULL_VALUES => true,
+            AbstractObjectNormalizer::PRESERVE_EMPTY_OBJECTS => true
           ]);
         } catch (SerializerExceptionInterface $ex) {
           throw new LLMException(

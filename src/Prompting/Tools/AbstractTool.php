@@ -2,14 +2,11 @@
 
 namespace AiBundle\Prompting\Tools;
 
-use Closure;
-
-readonly class Tool {
+abstract readonly class AbstractTool {
 
   public function __construct(
     public string $name,
-    public string $description,
-    public Closure $callback
+    public string $description
   ) {}
 
 }

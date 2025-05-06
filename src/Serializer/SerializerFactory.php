@@ -1,6 +1,6 @@
 <?php
 
-namespace AiBundle\Rest;
+namespace AiBundle\Serializer;
 
 use Symfony\Component\PropertyInfo\Extractor\PhpDocExtractor;
 use Symfony\Component\PropertyInfo\Extractor\ReflectionExtractor;

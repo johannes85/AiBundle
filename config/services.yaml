@@ -5,9 +5,9 @@ services:
   AiBundle\:
     resource: '../src/'
 
-  ai_bundle.rest.serializer:
+  ai_bundle.serializer:
     class: Symfony\Component\Serializer\Serializer
-    factory: '@AiBundle\Rest\SerializerFactory'
+    factory: '@AiBundle\Serializer\SerializerFactory'
 
   ai_bundle.rest.http_client:
     class: Symfony\Contracts\HttpClient\HttpClientInterface

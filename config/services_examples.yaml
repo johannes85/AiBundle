@@ -21,7 +21,7 @@ services:
     class: AiBundle\LLM\Ollama\Ollama
     arguments:
       $endpoint: 'http://127.0.0.1:11434'
-      $model: 'gemma3:12b'
+      $model: 'llama3.2:latest'
       $timeout: 300
 
   ai_bundle.llm.open_ai:
@@ -46,7 +46,7 @@ services:
     class: AiBundle\LLM\Anthropic\Anthropic
     arguments:
       $apiKey: '%env(string:ANTHROPIC_APIKEY)%'
-      $model: 'claude-3-5-sonnet-20241022'
+      $model: 'claude-opus-4-20250514'
       $timeout: 300
 
   ai_bundle.llm.mistral_ai:
@@ -56,3 +56,21 @@ services:
       $apiKey: '%env(string:MISTRAL_AI_APIKEY)%'
       $model: 'mistral-small-latest'
       $timeout: 300
+
+  ai_bundle.llm.deep_seek:
+    public: true
+    class: AiBundle\LLM\DeepSeek\DeepSeek
+    arguments:
+      $apiKey: '%env(string:DEEP_SEEK_APIKEY)%'
+      $model: 'deepseek-chat'
+      $timeout: 300
+
+  ai_bundle.mcp.example_everything.transport:
+    class: AiBundle\MCP\StdIoTransport
+    arguments:
+      $command: ['docker', 'run', '--rm','-i', 'mcp/everything']
+
+  ai_bundle.mcp.example_everything:
+    class: AiBundle\MCP\MCPServer
+    arguments:
+      $transport: '@ai_bundle.mcp.example_everything.transport'

@@ -21,7 +21,7 @@ use AiBundle\LLM\LLMUsage;
 use AiBundle\Prompting\FileType;
 use AiBundle\Prompting\Message;
 use AiBundle\Prompting\MessageRole;
-use AiBundle\Prompting\Tools\Tool;
+use AiBundle\Prompting\Tools\AbstractTool;
 use AiBundle\Prompting\Tools\Toolbox;
 use AiBundle\Prompting\Tools\ToolsHelper;
 use SensitiveParameter;
@@ -49,7 +49,7 @@ class GoogleAi extends AbstractLLM {
     private readonly string $model,
     private readonly float $timeout,
     #[Autowire('@ai_bundle.rest.http_client')] private readonly HttpClientInterface $httpClient,
-    #[Autowire('@ai_bundle.rest.serializer')] private readonly Serializer $serializer,
+    #[Autowire('@ai_bundle.serializer')] private readonly Serializer $serializer,
     private readonly SchemaGenerator $schemaGenerator,
     private readonly ToolsHelper $toolsHelper
   ) {}
@@ -126,7 +126,7 @@ class GoogleAi extends AbstractLLM {
           $systemInstruction,
           $generationConfig
         ))
-          ->setTools($toolbox !== null ? array_map(fn (Tool $tool) => new GoogleAiTool(
+          ->setTools($toolbox !== null ? array_map(fn (AbstractTool $tool) => new GoogleAiTool(
             [FunctionDeclaration::fromTool($tool, $this->toolsHelper)]
           ), $toolbox->getTools()) : null)
           ->setToolConfig(
@@ -208,7 +208,8 @@ class GoogleAi extends AbstractLLM {
       if ($payload !== null) {
         try {
           $options['json'] = $this->serializer->normalize($payload, 'json', [
-            AbstractObjectNormalizer::SKIP_NULL_VALUES => true
+            AbstractObjectNormalizer::SKIP_NULL_VALUES => true,
+            AbstractObjectNormalizer::PRESERVE_EMPTY_OBJECTS => true
           ]);
         } catch (SerializerExceptionInterface $ex) {
           throw new LLMException(

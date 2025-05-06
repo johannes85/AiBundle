@@ -3,6 +3,7 @@
 namespace AiBundle\Tests\Prompting;
 
 use AiBundle\LLM\LLMException;
+use AiBundle\Prompting\Tools\CallbackTool;
 use AiBundle\Prompting\Tools\Toolbox;
 use PHPUnit\Framework\TestCase;
 
@@ -24,6 +25,22 @@ class ToolboxTest extends TestCase {
     $this->expectNotToPerformAssertions();
     (new Toolbox([], maxLLMCalls: 5))->ensureMaxLLMCalls(5);
     (new Toolbox([], maxLLMCalls: 5))->ensureMaxLLMCalls(4);
+  }
+
+  public function test_ignoreInvalidToolChoiceTrue(): void {
+    $toolbox = new Toolbox([], ignoreInvalidToolChoice: true);
+    $tool = $toolbox->getTool('non_existent_tool');
+    $this->assertNotNull($tool);
+    $this->assertEquals('not_found', $tool->name);
+    $this->assertInstanceOf(CallbackTool::class, $tool);
+    $callbackFn = $tool->callback;
+    $this->assertEquals('Tool "non_existent_tool" not found', $callbackFn());
+  }
+
+  public function test_ignoreInvalidToolChoicFalsee(): void {
+    $toolbox = new Toolbox([], ignoreInvalidToolChoice: false);
+    $tool = $toolbox->getTool('non_existent_tool');
+    $this->assertNull($tool);
   }
 
 }

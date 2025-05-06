@@ -6,14 +6,14 @@ This PHP Symfony bundle allows to call LLM backends like OpenAI, Ollama etc. in 
 
 The following backends are supported:
 
-| Backend    | Text generation | Image processing | Tool calling | Info                       
-|------------|---|---|------------|----------------------------|
-| OpenAI     | ✅ | ✅ | ✅          | https://openai.com/        |
-| Ollama     | ✅ | ✅ | ✅*1        | https://ollama.ai/         |
-| GoogleAI   | ✅ | ✅ | ✅          | https://ai.google.dev      |
-| Anthropic  | ✅ | ✅ | ✅          | https://www.anthropic.com/ |
-| Mistral AI | ✅ | ✅ | ✅          | https://mistral.ai/        |
-| DeepSeek   | ✅ | ❌ | ✅          | https://www.deepseek.com/  |
+| Backend    | Text generation | Image processing | Tool calling | MCP Tool calling |Info                       
+|------------|---|---|-----|---|----------------------------|
+| OpenAI     | ✅ | ✅ | ✅   | ✅ | https://openai.com/        |
+| Ollama     | ✅ | ✅ | ✅*1 | ✅ | https://ollama.ai/         |
+| GoogleAI   | ✅ | ✅ | ✅   | ✅ | https://ai.google.dev      |
+| Anthropic  | ✅ | ✅ | ✅   | ✅ | https://www.anthropic.com/ |
+| Mistral AI | ✅ | ✅ | ✅   | ✅ | https://mistral.ai/        |
+| DeepSeek   | ✅ | ❌ | ✅   | ✅ | https://www.deepseek.com/  |
 
 The **OpenAI** endpoint URL can be changed so it is possible to access different backends with an OpenAI compatible API.
 But be aware that not all features are supported by all backends.  
@@ -108,7 +108,7 @@ $res = $this->llm->generate(
   ],
   toolbox: new Toolbox(
     [
-      new Tool(
+      new CallbackTool(
         'getWeather',
         'Retrieves current weather',
         function (
@@ -129,11 +129,31 @@ $res = $this->llm->generate(
 
 More information about how to define the schema of the tool callback function be found in the [Schema Generator](docs/schema_generator.md) documentation.
 
+### MCP tool calling
+
+Calling tools provided by an MCP server via the stdio and Streamable HTTP transport is supported.
+
+```php
+// $this->mcp is a MCPServer instance, see "Configure MCP server instances" in README.md
+
+$mcpToolbox = new Toolbox(
+  [...$this->mcp->getTools()]
+);
+
+$res = $this->llm->generate(
+  [
+    new Message(MessageRole::HUMAN, 'Add 1 and 2')
+  ],
+  toolbox: $mcpToolbox
+);
+
+$output->writeln($res->message->content);
+```
 
 ## Usage
 
 ### Configure LLM backend instances
-To use a specific backend as a service, it has to be configured:
+To use a specific backend as a service, it has to be registered in the bundle config:
 
 ```yaml
 # ai.yaml
@@ -177,6 +197,33 @@ In this example, the following services will be registered:
 - ai_bundle.llm.deep_seek
 
 When configuring the "default" instance of a llm, in addition to the ID, the class itself (e.g. AiBundle\LLM\OpenAi\OpenAi) will be registered as a service.
+
+### Configure MCP server instances
+
+#### Via stdio transport
+```yaml
+ai:
+  mcp_servers:
+    example_everything:
+      stdio_transport:
+        command: ['docker', 'run', '--rm','-i', 'mcp/everything']
+        stop_signal: 'SIGINT' # See: https://www.php.net/manual/en/pcntl.constants.php > SIG_* constants
+```
+
+#### Via Streamable HTTP transport
+
+Note: text/event-stream responses are not supported at the moment.
+
+```yaml
+ai:
+  mcp_servers:
+    example_github:
+      streamable_http_transport:
+        endpoint: 'https://api.githubcopilot.com/mcp/'
+        headers:
+          Authorization: 'Bearer ...'
+```
+
 
 ### Execute standalone examples
 This bundle provides standalone examples of the features provided.

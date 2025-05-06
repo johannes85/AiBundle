@@ -2,9 +2,10 @@
 
 namespace AiBundle\LLM\MistralAi\Dto;
 
-use AiBundle\Prompting\Tools\Tool;
+use AiBundle\Prompting\Tools\AbstractTool;
 use AiBundle\Prompting\Tools\ToolsHelper;
 use AiBundle\Prompting\Tools\ToolsHelperException;
+use AiBundle\Serializer\EmptyObjectHelper;
 
 readonly class MistralFunction {
 
@@ -24,16 +25,16 @@ readonly class MistralFunction {
   /**
    * Creates new instance from Tool
    *
-   * @param Tool $tool
+   * @param AbstractTool $tool
    * @param ToolsHelper $tools
    * @return self
    * @throws ToolsHelperException
    */
-  public static function fromTool(Tool $tool, ToolsHelper $tools): self {
+  public static function fromTool(AbstractTool $tool, ToolsHelper $tools): self {
     return new self(
       $tool->name,
       $tool->description,
-      $tools->getToolCallbackSchema($tool)
+      EmptyObjectHelper::injectEmptyObjects($tools->getToolCallbackSchema($tool))
     );
   }
 

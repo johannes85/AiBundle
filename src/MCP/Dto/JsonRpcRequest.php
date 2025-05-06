@@ -3,7 +3,7 @@
 namespace AiBundle\MCP\Dto;
 readonly class JsonRpcRequest {
 
-  private const string DEFAULT_JSON_RPC_VERSION = '2.0';
+  private const DEFAULT_JSON_RPC_VERSION = '2.0';
 
   /**
    * @param string $method
