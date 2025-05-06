@@ -2,7 +2,7 @@
     "name": "johannes85/ai-bundle",
     "description": "Adds AI support to Symfony. Allows easy calling of LLMs like Ollama, OpenAI, GoogleAI, MistralAI, Anthropic, DeepSeek.",
     "type": "library",
-    "version": "0.0.12",
+    "version": "1.0.0",
     "license": "MIT",
     "autoload": {
         "psr-4": {
