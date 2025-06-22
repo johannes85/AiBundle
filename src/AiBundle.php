@@ -196,7 +196,10 @@ class AiBundle extends AbstractBundle {
                 '$headers' => $serverConfig['streamable_http_transport']['headers'],
                 '$timeout' => $serverConfig['streamable_http_transport']['timeout']
               ]
-            ))->setAutowired(true)
+            ))->setAutowired(true),
+            default => throw new InvalidArgumentException(
+              'No transport defined for MCP server '.$serverName
+            )
           }
         );
         $builder->setDefinition(
