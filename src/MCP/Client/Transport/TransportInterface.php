@@ -1,6 +1,6 @@
 <?php
 
-namespace AiBundle\MCP;
+namespace AiBundle\MCP\Client\Transport;
 
 use AiBundle\MCP\Dto\JsonRpcRequest;
 use AiBundle\MCP\Dto\JsonRpcResponse;

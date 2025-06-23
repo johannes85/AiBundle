@@ -22,7 +22,7 @@ jobs:
         run: composer install
 
       - name: Run tests
-        run: vendor/bin/simple-phpunit
+        run: vendor/bin/phpunit tests
 
   static-analysis:
     strategy:

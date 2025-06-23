@@ -110,7 +110,7 @@ array:3 [
 ]
 ```
 
-### Tool calling
+### Tool calling (also for MCP tool definition)
 
 ```php
 $res = $this->llm->generate(

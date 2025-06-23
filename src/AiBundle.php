@@ -2,13 +2,17 @@
 
 namespace AiBundle;
 
+use AiBundle\MCP\Server\Attribute\ContainsMCPTools;
+use AiBundle\MCP\Server\DependencyInjection\Compiler\MCPServerPass;
+use InvalidArgumentException;
+use Reflector;
 use Symfony\Component\Config\Definition\Configurator\DefinitionConfigurator;
+use Symfony\Component\DependencyInjection\ChildDefinition;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Definition;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
 use Symfony\Component\DependencyInjection\Reference;
 use Symfony\Component\HttpKernel\Bundle\AbstractBundle;
-use InvalidArgumentException;
 
 class AiBundle extends AbstractBundle {
 
@@ -17,7 +21,8 @@ class AiBundle extends AbstractBundle {
   private const DEFAULT_TIMEOUT = 300;
   private const DEFAULT_LLM_CONFIG_NAME = 'default';
   private const LLM_DEFINITION_PREFIX = 'ai_bundle.llm.';
-  private const MCP_SERVER_DEFINITION_PREFIX = 'ai_bundle.mcp_server.';
+  private const MCP_ENDPOINT_DEFINITION_PREFIX = 'ai_bundle.mcp_endpoint.';
+  private const MCP_SERVER_DEFINITION = 'ai_bundle.mcp_server';
 
   private const LLM_CLASS_NAMES = [
     'anthropic' => 'AiBundle\LLM\Anthropic\Anthropic',
@@ -28,11 +33,17 @@ class AiBundle extends AbstractBundle {
     'deep_seek' => 'AiBundle\LLM\DeepSeek\DeepSeek'
   ];
 
+  public function build(ContainerBuilder $container): void {
+    parent::build($container);
+
+    $container->addCompilerPass(new MCPServerPass());
+  }
+
   public function configure(DefinitionConfigurator $definition): void {
     // @phpstan-ignore method.notFound
     $definition->rootNode()
       ->children()
-        ->arrayNode('llms')->canBeUnset()
+        ->arrayNode('llms')
           ->children()
             ->arrayNode('anthropic')->defaultValue([])
               ->useAttributeAsKey('name')
@@ -97,25 +108,34 @@ class AiBundle extends AbstractBundle {
             ->end()
           ->end()
         ->end()
-        ->arrayNode('mcp_servers')->canBeUnset()
-          ->useAttributeAsKey('name')
-          ->arrayPrototype()
-            ->children()
-              ->arrayNode('stdio_transport')
-                ->children()
-                  ->arrayNode('command')->isRequired()->stringPrototype()->end()->end()
-                  ->stringNode('stop_signal')->defaultValue('SIGINT')->end()
-                  ->integerNode('response_timeout')->defaultValue(20)->end()
-                ->end()
+        ->arrayNode('mcp')->addDefaultsIfNotSet()
+          ->children()
+            ->arrayNode('server')->addDefaultsIfNotSet()
+              ->children()
+                ->stringNode('name')->defaultValue('ExampleServer')->end()
+                ->stringNode('title')->defaultValue('Example Server Display Name')->end()
+                ->stringNode('version')->defaultValue('1.0.0')->end()
+                ->stringNode('instructions')->defaultValue('')->end()
               ->end()
-              ->arrayNode('streamable_http_transport')
+            ->end()
+            ->arrayNode('endpoints')
+              ->useAttributeAsKey('name')
+              ->arrayPrototype()
                 ->children()
-                  ->stringNode('endpoint')->isRequired()->end()
-                  ->arrayNode('headers')
-                    ->stringPrototype()->end()
-                    ->defaultValue([])
+                  ->arrayNode('stdio_transport')
+                    ->children()
+                      ->arrayNode('command')->isRequired()->stringPrototype()->end()->end()
+                      ->stringNode('stop_signal')->defaultValue('SIGINT')->end()
+                      ->integerNode('response_timeout')->defaultValue(20)->end()
+                    ->end()
                   ->end()
-                  ->floatNode('timeout')->defaultValue(30)->end()
+                  ->arrayNode('streamable_http_transport')
+                    ->children()
+                      ->stringNode('endpoint')->isRequired()->end()
+                      ->arrayNode('headers')->stringPrototype()->end()->defaultValue([])->end()
+                      ->floatNode('timeout')->defaultValue(30)->end()
+                    ->end()
+                  ->end()
                 ->end()
               ->end()
             ->end()
@@ -133,6 +153,13 @@ class AiBundle extends AbstractBundle {
    */
   public function loadExtension(array $config, ContainerConfigurator $container, ContainerBuilder $builder): void{
     $container->import('../config/services.yaml');
+
+    $builder->registerAttributeForAutoconfiguration(
+      ContainsMCPTools::class,
+      static function (ChildDefinition $definition, ContainsMCPTools $attribute, Reflector $reflector): void {
+        $definition->addTag('ai_bundle.server.mcp_tools_collection');
+      }
+    );
 
     if (isset($config['llms'])) {
       foreach ($config['llms'] as $llmType => $llmConfigs) {
@@ -174,38 +201,38 @@ class AiBundle extends AbstractBundle {
       }
     }
 
-    if (isset($config['mcp_servers'])) {
-      foreach ($config['mcp_servers'] as $serverName => $serverConfig) {
-        $transportDefinitionId = self::MCP_SERVER_DEFINITION_PREFIX.$serverName.'.transport';
+    if (isset($config['mcp']['endpoints'])) {
+      foreach ($config['mcp']['endpoints'] as $endpointName => $endpointConfig) {
+        $transportDefinitionId = self::MCP_ENDPOINT_DEFINITION_PREFIX.$endpointName.'.transport';
 
         $builder->setDefinition(
           $transportDefinitionId,
           match (true) {
-            isset($serverConfig['stdio_transport']) => (new Definition(
-              'AiBundle\MCP\StdIoTransport',
+            isset($endpointConfig['stdio_transport']) => (new Definition(
+              'AiBundle\MCP\Client\Transport\StdIoTransport',
               [
-                '$command' => $serverConfig['stdio_transport']['command'],
-                '$stopSignal' => constant($serverConfig['stdio_transport']['stop_signal']),
-                '$responseTimeout' => $serverConfig['stdio_transport']['response_timeout']
+                '$command' => $endpointConfig['stdio_transport']['command'],
+                '$stopSignal' => constant($endpointConfig['stdio_transport']['stop_signal']),
+                '$responseTimeout' => $endpointConfig['stdio_transport']['response_timeout']
               ]
             ))->setAutowired(true),
-            isset($serverConfig['streamable_http_transport']) => (new Definition(
-              'AiBundle\MCP\StreamableHttpTransport',
+            isset($endpointConfig['streamable_http_transport']) => (new Definition(
+              'AiBundle\MCP\Client\Transport\StreamableHttpTransport',
               [
-                '$endpoint' => $serverConfig['streamable_http_transport']['endpoint'],
-                '$headers' => $serverConfig['streamable_http_transport']['headers'],
-                '$timeout' => $serverConfig['streamable_http_transport']['timeout']
+                '$endpoint' => $endpointConfig['streamable_http_transport']['endpoint'],
+                '$headers' => $endpointConfig['streamable_http_transport']['headers'],
+                '$timeout' => $endpointConfig['streamable_http_transport']['timeout']
               ]
             ))->setAutowired(true),
             default => throw new InvalidArgumentException(
-              'No transport defined for MCP server '.$serverName
+              'No transport defined for MCP server '.$endpointName
             )
           }
         );
         $builder->setDefinition(
-          self::MCP_SERVER_DEFINITION_PREFIX.$serverName,
+          self::MCP_ENDPOINT_DEFINITION_PREFIX.$endpointName,
           (new Definition(
-            'AiBundle\MCP\MCPServer',
+            'AiBundle\MCP\Client\MCPEndpoint',
             [
               '$transport' => new Reference($transportDefinitionId),
             ]
@@ -213,7 +240,8 @@ class AiBundle extends AbstractBundle {
         );
       }
     }
-      
+
+    $builder->setParameter(self::MCP_SERVER_DEFINITION, $config['mcp']['server']);
   }
 
 

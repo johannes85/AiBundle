@@ -4,6 +4,9 @@
 
 This PHP Symfony bundle allows to call LLM backends like OpenAI, Ollama etc. in a generic and simple way.
 
+It also provides an MCP client and server with tool calling capabilities.
+This allows you to easily expose your Symfony services as MCP tools or call MCP tools provided by an MCP server.
+
 The following backends are supported:
 
 | Backend    | Text generation | Image processing | Tool calling | MCP Tool calling |Info                       
@@ -133,22 +136,13 @@ More information about how to define the schema of the tool callback function be
 
 Calling tools provided by an MCP server via the stdio and Streamable HTTP transport is supported.
 
-```php
-// $this->mcp is a MCPServer instance, see "Configure MCP server instances" in README.md
+See the [MCP Client documentation](docs/mcp_client.md) for more information.
 
-$mcpToolbox = new Toolbox(
-  [...$this->mcp->getTools()]
-);
+### MCP server
 
-$res = $this->llm->generate(
-  [
-    new Message(MessageRole::HUMAN, 'Add 1 and 2')
-  ],
-  toolbox: $mcpToolbox
-);
+The MCP server allows to expose service methods as MCP tools via Streamable HTTP transport. It can be used to create a custom MCP server that can be called by LLMs or other clients.
 
-$output->writeln($res->message->content);
-```
+See the [MCP Server documentation](docs/mcp_server.md) for more information.
 
 ## Usage
 
@@ -197,33 +191,6 @@ In this example, the following services will be registered:
 - ai_bundle.llm.deep_seek
 
 When configuring the "default" instance of a llm, in addition to the ID, the class itself (e.g. AiBundle\LLM\OpenAi\OpenAi) will be registered as a service.
-
-### Configure MCP server instances
-
-#### Via stdio transport
-```yaml
-ai:
-  mcp_servers:
-    example_everything:
-      stdio_transport:
-        command: ['docker', 'run', '--rm','-i', 'mcp/everything']
-        stop_signal: 'SIGINT' # See: https://www.php.net/manual/en/pcntl.constants.php > SIG_* constants
-```
-
-#### Via Streamable HTTP transport
-
-Note: text/event-stream responses are not supported at the moment.
-
-```yaml
-ai:
-  mcp_servers:
-    example_github:
-      streamable_http_transport:
-        endpoint: 'https://api.githubcopilot.com/mcp/'
-        headers:
-          Authorization: 'Bearer ...'
-```
-
 
 ### Execute standalone examples
 This bundle provides standalone examples of the features provided.

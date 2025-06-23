@@ -3,7 +3,8 @@
 namespace AiBundle\Examples;
 
 use AiBundle\LLM\LLMException;
-use AiBundle\MCP\MCPServer;
+use AiBundle\MCP\Client\MCPException;
+use AiBundle\MCP\Client\MCPEndpoint;
 use AiBundle\Prompting\Message;
 use AiBundle\Prompting\MessageRole;
 use AiBundle\Prompting\Tools\Toolbox;
@@ -18,12 +19,11 @@ use Symfony\Component\DependencyInjection\Container;
 class McpCommand extends AbstractExampleCommand {
 
   public function __construct(
-    #[Autowire('@ai_bundle.mcp.example_everything')] private MCPServer $mcp,
+    #[Autowire('@ai_bundle.mcp_endpoint.example_everything')] private MCPEndpoint $mcp,
     #[Autowire('@service_container')] Container $container
   ) {
     parent::__construct($container);
   }
-
 
   /**
    * @inheritDoc
@@ -32,6 +32,7 @@ class McpCommand extends AbstractExampleCommand {
    * @param OutputInterface $output
    * @return int
    * @throws LLMException
+   * @throws MCPException
    */
   protected function execute(InputInterface $input, OutputInterface $output): int {
     parent::execute($input, $output);

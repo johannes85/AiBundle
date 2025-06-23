@@ -12,4 +12,3 @@ services:
   ai_bundle.rest.http_client:
     class: Symfony\Contracts\HttpClient\HttpClientInterface
     factory: '@AiBundle\Rest\HttpClientFactory'
-

@@ -1,6 +1,6 @@
 <?php
 
-namespace AiBundle\MCP;
+namespace AiBundle\MCP\Client;
 
 use RuntimeException;
 

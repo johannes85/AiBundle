@@ -8,6 +8,7 @@ use Closure;
 use ReflectionClass;
 use ReflectionException;
 use ReflectionFunction;
+use ReflectionFunctionAbstract;
 use ReflectionMethod;
 use ReflectionNamedType;
 use ReflectionParameter;
@@ -16,20 +17,26 @@ use ReflectionProperty;
 class SchemaGenerator {
 
   /**
-   * Generates json schema for parameters of a closure
+   * Generates json schema for parameters of a function or closure
    *
-   * @param Closure $closure
+   * @param Closure|ReflectionFunctionAbstract $function
    * @return array<mixed>
    * @throws ReflectionException
    * @throws SchemaGeneratorException
    */
-  public function generateForClosureParameters(Closure $closure): array {
+  public function generateForFunctionParameters(
+    Closure|ReflectionFunctionAbstract $function
+  ): array {
     $schema = [
       'type' => 'object',
       'properties' => [],
     ];
     $requiredProperties = [];
-    foreach((new ReflectionFunction($closure))->getParameters() as $parameter) {
+
+    $parameters = $function instanceof ReflectionFunctionAbstract
+      ? $function->getParameters()
+      : (new ReflectionFunction($function))->getParameters();
+    foreach($parameters as $parameter) {
       $res = $this->generateForParameter($parameter);
       $schema['properties'][$parameter->getName()] = $res['schema'];
       if ($res['required']) {

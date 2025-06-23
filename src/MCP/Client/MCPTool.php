@@ -1,6 +1,6 @@
 <?php
 
-namespace AiBundle\MCP;
+namespace AiBundle\MCP\Client;
 
 use AiBundle\MCP\Dto\ToolDefinition;
 use AiBundle\Prompting\Tools\AbstractTool;
@@ -11,13 +11,13 @@ readonly class MCPTool extends AbstractTool {
    * @param string $name
    * @param string $description
    * @param array<mixed> $schema
-   * @param MCPServer $server
+   * @param MCPEndpoint $server
    */
   public function __construct(
     string $name,
     string $description,
     public array $schema,
-    private MCPServer $server
+    private MCPEndpoint $server
   ) {
     parent::__construct($name, $description);
   }
@@ -26,12 +26,12 @@ readonly class MCPTool extends AbstractTool {
    * Creates MCPTool instance from ToolDefinition and server
    *
    * @param ToolDefinition $toolDefinition
-   * @param MCPServer $server
+   * @param MCPEndpoint $server
    * @return self
    */
   public static function fromToolDefinition(
     ToolDefinition $toolDefinition,
-    MCPServer $server
+    MCPEndpoint $server
   ): self {
     return new self(
       $toolDefinition->name,

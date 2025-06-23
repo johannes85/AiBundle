@@ -1,16 +1,17 @@
 <?php
 
-namespace AiBundle\MCP;
+namespace AiBundle\MCP\Client;
 
+use AiBundle\MCP\Client\Transport\TransportInterface;
 use AiBundle\MCP\Dto\JsonRpcRequest;
 use AiBundle\MCP\Dto\ToolDefinition;
+use AiBundle\MCP\Dto\ToolResponse;
 use AiBundle\MCP\Dto\ToolsList;
-use AiBundle\MCP\Model\ToolResponse;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
-use Symfony\Component\Serializer\Serializer;
 use Symfony\Component\Serializer\Exception\ExceptionInterface as SerializerExceptionInterface;
+use Symfony\Component\Serializer\Serializer;
 
-class MCPServer {
+class MCPEndpoint {
 
   public function __construct(
     private TransportInterface $transport,

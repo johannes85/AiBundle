@@ -38,17 +38,24 @@ ai:
         apikey: '...'
         model: 'deepseek-chat'
         timeout: 30 # (optional) Timeout value in seconds, default: 300
-  mcp_servers:
-    example_everything:
-      stdio_transport:
-        command: ['docker', 'run', '--rm','-i', 'mcp/everything']
-        stop_signal: 'SIGINT' # See: https://www.php.net/manual/en/pcntl.constants.php > SIG_* constants
-        response_timeout: # Time to wait in seconds for a response from the MCP server, default: 20
-    example_github:
-      streamable_http_transport:
-        endpoint: 'https://api.githubcopilot.com/mcp/'
-        headers:
-          Authorization: 'Bearer ...'
+  mcp:
+    endpoints:
+      example_everything:
+        stdio_transport:
+          command: ['docker', 'run', '--rm','-i', 'mcp/everything']
+          stop_signal: 'SIGINT' # See: https://www.php.net/manual/en/pcntl.constants.php > SIG_* constants
+          response_timeout: 20 # Time to wait in seconds for a response from the MCP server, default: 20
+      example_github:
+        streamable_http_transport:
+          endpoint: 'https://api.githubcopilot.com/mcp/'
+          headers:
+            Authorization: 'Bearer ...'
+    server:
+      name: ExampleServer
+      title: Example Server Display Name
+      version: 1.0.0
+      instructions: 'Optional instructions for the client'
+    
 ```
 
 ## LLM instances

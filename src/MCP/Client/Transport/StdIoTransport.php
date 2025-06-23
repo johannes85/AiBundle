@@ -1,7 +1,8 @@
 <?php
 
-namespace AiBundle\MCP;
+namespace AiBundle\MCP\Client\Transport;
 
+use AiBundle\MCP\Client\MCPException;
 use AiBundle\MCP\Dto\JsonRpcRequest;
 use AiBundle\MCP\Dto\JsonRpcResponse;
 use Psr\Log\LoggerInterface;
@@ -11,19 +12,21 @@ use Symfony\Component\Process\Exception\ProcessStartFailedException;
 use Symfony\Component\Process\Exception\RuntimeException;
 use Symfony\Component\Process\InputStream;
 use Symfony\Component\Process\Process;
+use Symfony\Component\Serializer\Exception\ExceptionInterface as SerializerExceptionInterface;
 use Symfony\Component\Serializer\Serializer;
 use Symfony\Component\Uid\Uuid;
-use Symfony\Component\Serializer\Exception\ExceptionInterface as SerializerExceptionInterface;
 
 class StdIoTransport implements TransportInterface {
 
   private const PROTOCOL_VERSION = '2024-11-05';
   private const SUPPORTED_PROTOCOL_VERSIONS = [
-    '2024-10-07',
-    '2024-11-05'
+    '2025-06-18',
+    '2025-03-26',
+    '2024-11-05',
+    '2024-10-07'
   ];
 
-  private const DEFAULT_STOP_SIGNAL = SIGINT;
+  private const DEFAULT_STOP_SIGNAL = 2;
 
   /** @var ?Process */
   private ?Process $process = null;

@@ -1,6 +1,6 @@
 <?php
 
-namespace AiBundle\MCP;
+namespace AiBundle\MCP\Client\Transport;
 
 use AiBundle\MCP\Dto\JsonRpcRequest;
 use AiBundle\MCP\Dto\JsonRpcResponse;
@@ -13,12 +13,15 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 class StreamableHttpTransport implements TransportInterface {
 
-  private const PROTOCOL_VERSION = '2024-11-05';
+  private const PROTOCOL_VERSION = '2025-06-18';
   private const SUPPORTED_PROTOCOL_VERSIONS = [
-    '2024-11-05'
+    '2025-06-18',
+    '2025-03-26'
   ];
 
   private bool $initialized = false;
+
+  private ?string $neogatedProtocolVersion = null;
 
   /**
    * @param string $endpoint
@@ -63,6 +66,7 @@ class StreamableHttpTransport implements TransportInterface {
           implode(', ', self::SUPPORTED_PROTOCOL_VERSIONS)
         ));
       }
+      $this->neogatedProtocolVersion = $serverProtocolVersion;
     }
   }
 
@@ -87,7 +91,10 @@ class StreamableHttpTransport implements TransportInterface {
       }
       try {
         $options = [
-          'headers' => $this->headers,
+          'headers' => array_merge(
+            $this->headers,
+            ['MCP-Protocol-Version' => $this->neogatedProtocolVersion]
+          ),
           'json' => $this->serializer->normalize($request, null, [
             Serializer::EMPTY_ARRAY_AS_OBJECT => true
           ]),

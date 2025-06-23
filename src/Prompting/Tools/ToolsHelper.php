@@ -4,18 +4,17 @@ namespace AiBundle\Prompting\Tools;
 
 use AiBundle\Json\SchemaGenerator;
 use AiBundle\Json\SchemaGeneratorException;
-use AiBundle\MCP\MCPException;
-use AiBundle\MCP\MCPTool;
+use AiBundle\MCP\Client\MCPException;
+use AiBundle\MCP\Client\MCPTool;
 use InvalidArgumentException;
-use phpDocumentor\Reflection\Types\True_;
 use Psr\Log\LoggerInterface;
 use ReflectionException;
 use ReflectionFunction;
 use ReflectionNamedType;
 use Stringable;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
-use Symfony\Component\Serializer\Serializer;
 use Symfony\Component\Serializer\Exception\ExceptionInterface as SerializerExceptionInterface;
+use Symfony\Component\Serializer\Serializer;
 
 class ToolsHelper {
 
@@ -35,7 +34,7 @@ class ToolsHelper {
   public function getToolCallbackSchema(AbstractTool $tool): array {
     try {
       return match (true) {
-        $tool instanceof CallbackTool => $this->schemaGenerator->generateForClosureParameters($tool->callback),
+        $tool instanceof CallbackTool => $this->schemaGenerator->generateForFunctionParameters($tool->callback),
         $tool instanceof MCPTool => $tool->schema,
         default => throw new InvalidArgumentException('Unsupported tool type:'.get_class($tool)),
       };

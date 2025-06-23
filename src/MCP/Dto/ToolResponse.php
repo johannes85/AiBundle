@@ -1,6 +1,6 @@
 <?php
 
-namespace AiBundle\MCP\Model;
+namespace AiBundle\MCP\Dto;
 
 class ToolResponse {
 

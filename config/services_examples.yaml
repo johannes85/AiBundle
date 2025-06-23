@@ -65,12 +65,12 @@ services:
       $model: 'deepseek-chat'
       $timeout: 300
 
-  ai_bundle.mcp.example_everything.transport:
-    class: AiBundle\MCP\StdIoTransport
+  ai_bundle.mcp_endpoint.example_everything.transport:
+    class: AiBundle\MCP\Client\Transport\StdIoTransport
     arguments:
       $command: ['docker', 'run', '--rm','-i', 'mcp/everything']
 
-  ai_bundle.mcp.example_everything:
-    class: AiBundle\MCP\MCPServer
+  ai_bundle.mcp_endpoint.example_everything:
+    class: AiBundle\MCP\Client\MCPEndpoint
     arguments:
-      $transport: '@ai_bundle.mcp.example_everything.transport'
+      $transport: '@ai_bundle.mcp_endpoint.example_everything.transport'
