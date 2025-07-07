@@ -268,35 +268,40 @@ class MCPHandler {
    *
    * @param mixed $result
    * @return array<Content>
+   * @throws MCPHandlerException
    */
   private function createContentArrayForToolResponse(
     mixed $result,
   ): array {
-    if (is_array($result)) {
-      if (count($result) === 0) {
-        return [new TextContent('[]')];
-      }
-      $contentArray = true;
-      foreach ($result as $item) {
-        if (!$item instanceof Content) {
-          $contentArray = false;
-          break;
+    try {
+      if (is_array($result)) {
+        if (count($result) === 0) {
+          return [new TextContent('[]')];
         }
+        $contentArray = true;
+        foreach ($result as $item) {
+          if (!$item instanceof Content) {
+            $contentArray = false;
+            break;
+          }
+        }
+        if ($contentArray) {
+          return $result;
+        }
+        return [new TextContent($this->serializer->serialize($result, 'json'))];
+      } else if (is_object($result)) {
+        return [new TextContent($this->serializer->serialize($result, 'json'))];
+      } else if ($result === null) {
+        return [new TextContent('null')];
+      } else if (is_bool($result)) {
+        return [new TextContent($result ? 'true' : 'false')];
+      } else if ($result instanceof Content) {
+        return [$result];
       }
-      if ($contentArray) {
-        return $result;
-      }
-      return [TextContent::buildFrom($result)];
-    } else if ($result === null) {
-      return [new TextContent('null')];
-    } else if (is_string($result) || is_int($result) || is_float($result)) {
-      return [TextContent::buildFrom($result)];
-    } else if (is_bool($result)) {
-      return [new TextContent($result ? 'true' : 'false')];
-    } else if ($result instanceof Content) {
-      return [$result];
+      return [new TextContent((string) $result)];
+    } catch (SerializerExceptionInterface $ex) {
+      throw new MCPHandlerException('Error serializing tool response', previous: $ex);
     }
-    return [TextContent::buildFrom($result)];
   }
 
 }

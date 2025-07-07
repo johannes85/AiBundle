@@ -17,7 +17,7 @@ use Symfony\Component\Serializer\SerializerInterface;
 
 class SerializerFactory {
 
-  public function __invoke(): SerializerInterface {
+  public function __invoke(): Serializer {
     $classMetadataFactory = new ClassMetadataFactory(new AttributeLoader());
     return new Serializer(
       [

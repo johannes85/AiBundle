@@ -6,23 +6,25 @@ use AiBundle\MCP\Dto\ImageContent;
 use AiBundle\MCP\Dto\TextContent;
 use AiBundle\MCP\Server\MCPHandler;
 use AiBundle\MCP\Server\ToolRegistry;
+use AiBundle\Serializer\SerializerFactory;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use ReflectionMethod;
 use Symfony\Component\DependencyInjection\Container;
 use Symfony\Component\Serializer\Serializer;
+use Symfony\Component\Serializer\SerializerInterface;
 
 class MCPHandlerTest extends TestCase {
 
   private MCPHandler $instance;
-  private Serializer|MockObject $mockSerializer;
+  private Serializer $mockSerializer;
   private ToolRegistry|MockObject $mockToolRegistry;
   private Container|MockObject $mockContainer;
 
   protected function setUp(): void {
     $this->instance = new MCPHandler(
-      $this->mockSerializer = $this->createMock(Serializer::class),
+      (new SerializerFactory())(),
       $this->mockToolRegistry = $this->createMock(ToolRegistry::class),
       $this->mockContainer = $this->createMock(Container::class),
       [
@@ -72,7 +74,7 @@ class MCPHandlerTest extends TestCase {
       'createContentArrayForToolResponse',
       [new TextContent('foo'), 'bar']
     );
-    $this->assertEquals([new TextContent('[{"type":"text","text":"foo"},"bar"]')], $res);
+    $this->assertEquals([new TextContent('[{"text":"foo","type":"text"},"bar"]')], $res);
   }
 
 }
