@@ -289,14 +289,14 @@ class MCPHandler {
           return $result;
         }
         return [new TextContent($this->serializer->serialize($result, 'json'))];
+      } else if ($result instanceof Content) {
+        return [$result];
       } else if (is_object($result)) {
         return [new TextContent($this->serializer->serialize($result, 'json'))];
       } else if ($result === null) {
         return [new TextContent('null')];
       } else if (is_bool($result)) {
         return [new TextContent($result ? 'true' : 'false')];
-      } else if ($result instanceof Content) {
-        return [$result];
       }
       return [new TextContent((string) $result)];
     } catch (SerializerExceptionInterface $ex) {

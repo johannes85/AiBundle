@@ -48,7 +48,8 @@ class MCPHandlerTest extends TestCase {
       ['', ''],
       ['test response', 'test response'],
       [['key' => 'value'], '{"key":"value"}'],
-      [new class { public string $key = 'value'; }, '{"key":"value"}']
+      [new class { public string $key = 'value'; }, '{"key":"value"}'],
+      [new TextContent('text response'), 'text response'],
     ];
   }
 
