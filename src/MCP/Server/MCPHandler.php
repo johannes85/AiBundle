@@ -91,7 +91,8 @@ class MCPHandler {
             $this->handleJsonRpcRequest($jsonRpcRequest),
             'json',
             [
-              AbstractObjectNormalizer::PRESERVE_EMPTY_OBJECTS => true
+              AbstractObjectNormalizer::PRESERVE_EMPTY_OBJECTS => true,
+              AbstractObjectNormalizer::SKIP_NULL_VALUES => $this->serverConfig['serialize_null'] === false
             ]
           ),
           200,

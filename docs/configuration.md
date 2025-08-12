@@ -55,7 +55,8 @@ ai:
       title: Example Server Display Name
       version: 1.0.0
       instructions: 'Optional instructions for the client'
-    
+      serialize_null: false # Whether to serialize null values in the response (default: false). Some clients like LM Studio do not support null values.
+
 ```
 
 ## LLM instances

@@ -116,6 +116,7 @@ class AiBundle extends AbstractBundle {
                 ->stringNode('title')->defaultValue('Example Server Display Name')->end()
                 ->stringNode('version')->defaultValue('1.0.0')->end()
                 ->stringNode('instructions')->defaultValue('')->end()
+                ->booleanNode('serialize_null')->defaultFalse()->end()
               ->end()
             ->end()
             ->arrayNode('endpoints')
