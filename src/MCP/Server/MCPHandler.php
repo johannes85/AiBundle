@@ -52,10 +52,10 @@ class MCPHandler {
    * @param array<string, mixed> $serverConfig
    */
   public function __construct(
-    #[Autowire('@ai_bundle.serializer')] private Serializer $serializer,
-    private ToolRegistry $toolRegistry,
-    #[Autowire('@service_container')] private ContainerInterface $container,
-    #[Autowire('%ai_bundle.mcp_server%')] private array $serverConfig
+    #[Autowire('@ai_bundle.serializer')] private readonly Serializer $serializer,
+    private readonly ToolRegistry $toolRegistry,
+    #[Autowire('@service_container')] private readonly ContainerInterface $container,
+    #[Autowire('%ai_bundle.mcp_server%')] private readonly array $serverConfig
   ) {}
 
   /**
